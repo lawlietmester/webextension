@@ -1,6 +1,6 @@
 # Cross-browser Firefox/Chrome webextension
 
-Hello! This project created to make united syntax for chrome/browser objects, mostly promise-based with some enchantments. So in most cases you will write one predictable code.
+Hello! This project created to make united syntax for chrome/browser objects, promise-based with some enchantments (callback behaviour in most cases won't work). So in most cases you will write one predictable code. Deprecated features in most cases are not supported. This script does not modify original browser/chrome objects.
 
 Keep in mind that some features like Proxy API have absolutely different realizations in FF and Chrome - so you can not write one code for them both, you need to create browser split in your code.
 
@@ -57,6 +57,18 @@ As for 54th FF, there is no onChange object in it.
 If .webRTCIPHandlingPolicy exist, deprecated fetures like .webRTCNonProxiedUdpEnabled
 and .webRTCMultipleRoutesEnabled are not provided.
 
+### browser.tabs.query
+
+You can use it without arguments.
+
+### browser.browserAction.getBadgeText
+
+You can use it without arguments.
+
+### browser.browserAction.getTitle
+
+You can use it without arguments.
+
 ## Supported browsers
 
 Firefox 45+, Chrome 32+
@@ -65,10 +77,14 @@ Firefox 45+, Chrome 32+
 
 * __Why this script does not based on Proxy object?__
 By work I need to support Chrome 31+ which does not support Proxy object.
-In future it can be Proxy object based.
+In time it will be Proxy object based.
+
+* __What about support of Edge?__
+First I need to create good chrome/ff support.
 
 
 ## TODO
 
 Поддержка deprecated для хрома вместо обычных -> сделать
+
 tabs.query -> no arguments

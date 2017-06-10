@@ -5,6 +5,27 @@ import _ from 'lodash';
 /** @type {boolean} */
 let isChrome = typeof browser === 'undefined';
 
+/* TODO
+alarms
+bookmarks
+browsingData
+commands
+contextMenus
+contextualIdentities
+cookies
+devtools.inspectedWindow
+devtools.network
+devtools.panels
+downloads
+history
+identity
+idle
+notifications
+omnibox
+pageAction
+sessions
+sidebarAction
++ only chrome API - check */
 
 /** Create BrowserSetting object with promise-based return
 @param {object} browserObject
@@ -62,6 +83,23 @@ let bindObjects = ( object, browserObject, properties ) => (
     ( carry, property ) => {
       if( !browserObject[ property ] ) return;
       carry[ property ] = browserObject[ property ];
+    },
+    object
+  )
+);
+
+
+/** Bind BrowserSetting objects
+@param {object} object
+@param {object} browserObject
+@param {array<string>} properties
+@return {object} same object */
+let bindBrowserSettings = ( object, browserObject, properties ) => (
+  _.transform(
+    properties,
+    ( carry, property ) => {
+      if( !browserObject[ property ] ) return;
+      carry[ property ] = buildBrowserSetting( browserObject[ property ] );
     },
     object
   )
@@ -137,7 +175,8 @@ let bindPromiseReturn = ( object, browserObject, properties ) => {
 @param {object} object
 @param {object} browserObject
 @param {object} properties
-@param {array} [properties.objects]
+@param {array<string>} [properties.objects]
+@param {array<string>} [properties.browserSettings]
 @param {array} [properties.methods]
 @param {object<array>} [properties.promises]
 @return {object} same object */
@@ -145,12 +184,16 @@ let bindAll = ( object, browserObject, properties ) => {
   if( properties.objects ) {
     bindObjects( object, browserObject, properties.objects );
   }
+  if( properties.browserSettings ){
+    bindBrowserSettings( object, browserObject, properties.browserSettings );
+  }
   if( properties.methods ) {
     bindMethods( object, browserObject, properties.methods );
   }
   if( properties.promises ) {
     bindPromiseReturn( object, browserObject, properties.promises );
   }
+
 
   return object;
 };
@@ -161,78 +204,17 @@ let Browser = ( () => {
   let ns = isChrome ? chrome : browser;
 
   let output = {
-    /** Proxy getter */
-    get 'proxy'() {
-      if( typeof ns.proxy !== 'object' || !isChrome ) return ns.proxy;
-
-      return {
-        'onProxyError': ns.proxy.onProxyError,
-        'settings': ( () => {
-          let settings = {
-            'onChange': ns.proxy.settings.onChange
-          };
-          return bindPromiseReturn(
-            settings, ns.proxy.settings, [ 'clear', 'get', 'set' ]
-          );
-        })()
-      };
-    },
-
-    /** Tabs methods */
-    'tabs': ( () => {
-      if( !ns.tabs || !isChrome ) return ns.tabs;
-
-      return bindAll(
-        {},
-        ns.tabs,
-        {
-          'objects': [
-            'onCreated', 'onUpdated', 'onMoved', 'onSelectionChanged',
-            'onActiveChanged', 'onActivated', 'onHighlightChanged',
-            'onHighlighted', 'onDetached', 'onAttached', 'onRemoved',
-            'onReplaced', 'onZoomChange'
-          ],
-          'methods': [ 'connect' ],
-          'promises': {
-            '0': [ 'getCurrent' ],
-            '1': [
-              'get', 'create', 'duplicate', 'query', 'highlight', 'remove',
-              'detectLanguage', 'getZoom', 'discard'
-            ],
-            '2': [
-              'update', 'sendMessage', 'move', 'reload', 'captureVisibleTab',
-              'executeScript', 'insertCSS', 'setZoom', 'setZoomSettings'
-            ] // TODO sendMessage as 2/3 parameters
-          }
-        }
-      );
-    })(),
-
-    /** Storage */
-    'storage': ( () => {
-      if( !ns.storage || !isChrome ) return ns.storage;
-
-      return {
-        'sync': bindPromiseReturn(
-          {}, ns.storage.sync, [ 'remove', 'set', 'get' ]
-        )
-      };
-    })(),
-
-    /** Web Request */
+    /** Web Request
+    TODO actual check */
     'webRequest': ( () => {
       if( !ns.webRequest ) return ns.webRequest;
       let webRequest = {};
 
-      bindObjects(
-        webRequest,
-        ns.webRequest,
-        [
-          'onBeforeRequest', 'onBeforeSendHeaders', 'onSendHeaders',
-          'onHeadersReceived', 'onResponseStarted', 'onBeforeRedirect',
-          'onCompleted', 'onErrorOccurred'
-        ]
-      );
+      bindObjects( webRequest, ns.webRequest, [
+        'onBeforeRequest', 'onBeforeSendHeaders', 'onSendHeaders',
+        'onHeadersReceived', 'onResponseStarted', 'onBeforeRedirect',
+        'onCompleted', 'onErrorOccurred'
+      ] );
 
       // NOTE conflict of realisations
       if( ns.webRequest.onAuthRequired ) {
@@ -261,85 +243,237 @@ let Browser = ( () => {
       return webRequest;
     })(),
 
-    /** Permissions */
-    'permissions': ( () => {
-      if( !ns.permissions || !isChrome ) return ns.permissions;
+    /** BrowserAction (complete)
+    https://developer.chrome.com/extensions/browserAction
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/browserAction */
+    'browserAction': ( () => {
+      if( !ns.browserAction ) return ns.browserAction;
 
-      return bindAll(
-        {},
-        ns.permissions,
-        {
-          'objects': [ 'onAdded', 'onRemoved' ],
-          'promises': {
-            '0': [ 'getAll' ],
-            '1': [ 'contains', 'request', 'remove' ]
-          }
-        }
+      let browserAction = bindAll({}, ns.browserAction, {
+        'objects': [ 'onClicked' ],
+        'methods': [
+          'setTitle', 'setPopup', 'setBadgeText', 'setBadgeBackgroundColor',
+          'enable', 'disable'
+        ]
+      });
+      if( isChrome ){
+        bindPromiseReturn(
+          browserAction, ns.browserAction, { '1': [ 'setIcon' ] }
+        );
+      }
+      else{
+        bindMethods( browserAction, ns.browserAction, [ 'setIcon' ] );
+      }
+
+      // 0 arguments support
+      return _.transform(
+        [ 'getBadgeText', 'getTitle', 'getPopup', 'getBadgeBackgroundColor' ],
+        ( carry, property ) => {
+          if( !ns.browserAction[ property ] ) return;
+          carry[ property ] = ( details = {}) => (
+            isChrome
+            ? new Promise( resolve => {
+              ns.browserAction[ property ]( details, resolve );
+            })
+            : ns.browserAction[ property ]( details )
+          );
+        },
+        browserAction
       );
     })(),
 
-    /** Management */
+    /** Extension (complete)
+    https://developer.chrome.com/extensions/extension
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/extension */
+    'extension': ( () => {
+      if( !ns.extension || !isChrome ) return ns.extension;
+
+      let extension = {
+        get 'lastError': () => ns.extension.lastError,
+        get 'inIncognitoContext': () => ns.extension.inIncognitoContext
+      };
+
+      return bindAll( extension, ns.extension, {
+        'methods': [ 'getViews', 'getBackgroundPage', 'setUpdateUrlData' ],
+        'promises': {
+          '0': [ 'isAllowedIncognitoAccess', 'isAllowedFileSchemeAccess' ]
+        }
+      });
+    })(),
+
+    /** i18n
+    https://developer.chrome.com/extensions/i18n
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/i18n */
+    'i18n': ( () => {
+      if( !ns.i18n || !isChrome ) return ns.i18n;
+
+      return bindAll( {}, ns.i18n, {
+        'methods': [ 'getMessage', 'getUILanguage' ],
+        'promises': {
+          '0': [ 'getAcceptLanguages' ],
+          '1': [ 'detectLanguage' ]
+        }
+      });
+    })(),
+
+    /** Management (complete)
+    https://developer.chrome.com/extensions/management
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/management */
     'management': ( () => {
       if( !ns.management || !isChrome ) return ns.management;
 
-      return bindAll(
-        {},
-        ns.management,
-        {
-          'objects': [
-            'onInstalled', 'onUninstalled', 'onEnabled', 'onDisabled'
+      return bindAll({}, ns.management, {
+        'objects': [
+          'onInstalled', 'onUninstalled', 'onEnabled', 'onDisabled',
+          'ExtensionInfo'
+        ],
+        'promises': {
+          '0': [ 'getAll', 'getSelf' ],
+          '1': [
+            'get', 'getPermissionWarningsById',
+            'getPermissionWarningsByManifest', 'uninstallSelf', 'launchApp',
+            'createAppShortcut'
           ],
-          'promises': {
-            '0': [ 'getAll', 'getSelf' ],
-            '1': [
-              'get', 'getPermissionWarningsById',
-              'getPermissionWarningsByManifest', 'uninstallSelf', 'launchApp',
-              'createAppShortcut'
-            ],
-            '2': [ 'setEnabled', 'uninstall', 'setLaunchType', 'generateAppForLink' ]
-          }
+          '2': [ 'setEnabled', 'uninstall', 'setLaunchType', 'generateAppForLink' ]
         }
-      );
+      });
     })(),
 
-    /** Runtime */
+    /** Permissions (complete)
+    https://developer.chrome.com/extensions/permissions // F55+
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/permissions */
+    'permissions': ( () => {
+      if( !ns.permissions || !isChrome ) return ns.permissions;
+
+      return bindAll({}, ns.permissions, {
+        'objects': [ 'onAdded', 'onRemoved' ],
+        'promises': {
+          '0': [ 'getAll' ],
+          '1': [ 'contains', 'request', 'remove' ]
+        }
+      });
+    })(),
+
+    /** Privacy (complete)
+    https://developer.chrome.com/extensions/privacy
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/privacy*/
+    'privacy': ( () => {
+      let privacy = {};
+      if( !ns.privacy ) return ns.privacy;
+
+      _.transform(
+        [ 'IPHandlingPolicy', 'services', 'websites' ],
+        ( carry, property ) => {
+          carry[ property ] = ns.privacy[ property ];
+        },
+        privacy
+      );
+
+      // FF54+, chrome
+      if( ns.privacy.network ) {
+        // BrowserSettings
+        let network = bindBrowserSettings({}, ns.privacy.network, [
+          'networkPredictionEnabled',
+          'peerConnectionEnabled' // FF only feature
+        ] );
+
+        // WebRTC
+        if( ns.privacy.network.webRTCIPHandlingPolicy ) {
+          network.webRTCIPHandlingPolicy = buildBrowserSetting(
+            ns.privacy.network.webRTCIPHandlingPolicy
+          );
+        }
+        // Deprecated features will be only if new version is not available
+        else if( ns.privacy.network.webRTCNonProxiedUdpEnabled || ns.privacy.network.webRTCMultipleRoutesEnabled ) {
+          bindBrowserSettings( network, ns.privacy.network, [
+            'webRTCNonProxiedUdpEnabled', 'webRTCMultipleRoutesEnabled'
+          ] );
+        }
+
+        privacy.network = network;
+      }
+
+      // FF54+, chrome
+      if( ns.privacy.websites ){
+        let websites = bindBrowserSettings({}, ns.privacy.websites, [
+          'hyperlinkAuditingEnabled', // FF54 + chrome
+          'thirdPartyCookiesAllowed', // other only Chrome
+          'referrersEnabled',
+          'protectedContentEnabled'
+        ] );
+
+        privacy.websites = websites;
+      }
+
+      if( ns.privacy.services ){ // Chrome only
+        let services = bindBrowserSettings({}, ns.privacy.services, [
+          'alternateErrorPagesEnabled',
+          'autofillEnabled',
+          'hotwordSearchEnabled',
+          'passwordSavingEnabled',
+          'safeBrowsingEnabled',
+          'safeBrowsingExtendedReportingEnabled',
+          'searchSuggestEnabled',
+          'spellingServiceEnabled',
+          'translationServiceEnabled'
+        ] );
+
+        privacy.services = services;
+      }
+
+      return privacy;
+    })(),
+
+    /** Proxy (compete)
+    https://developer.chrome.com/extensions/proxy */
+    'proxy': ( () => {
+      if( typeof ns.proxy !== 'object' || !isChrome ) return ns.proxy;
+
+      return bindAll({}, ns.proxy, {
+        'objects': [ 'onProxyError' ],
+        'browserSettings': [ 'settings' ]
+      });
+    })(),
+
+    /** Runtime (compete)
+    https://developer.chrome.com/extensions/runtime
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/runtime */
     'runtime': ( () => {
       if( !ns.runtime || !isChrome ) return ns.runtime;
 
-      let runtime = bindAll(
-        {},
-        ns.runtime,
-        {
-          'objects': [
-            'onStartup',
-            'onInstalled',
-            'onSuspend',
-            'onSuspendCanceled',
-            'onUpdateAvailable',
-            'onBrowserUpdateAvailable',
-            'onConnect',
-            'onConnectExternal',
-            'onMessageExternal',
-            'onRestartRequired'
+      let runtime = {
+        get 'lastError': () => ns.runtime.lastError
+      };
+
+       bindAll( runtime, ns.runtime, {
+        'objects': [
+          'id', 'onStartup', 'onInstalled', 'onSuspend', 'onSuspendCanceled',
+          'onUpdateAvailable', 'onConnect', 'onConnectExternal',
+          'onMessageExternal'
+        ],
+        'methods': [
+          'getManifest', 'getURL', 'reload', 'restart', 'connect',
+          'connectNative'
+        ],
+        'promises': {
+          '0': [
+            'openOptionsPage', 'requestUpdateCheck', 'getPlatformInfo',
+            'getPackageDirectoryEntry'
           ],
-          'methods': [
-            'getManifest', 'getURL', 'reload', 'restart', 'connect',
-            'connectNative'
-          ],
-          'promises': {
-            '0': [
-              'openOptionsPage', 'requestUpdateCheck', 'getPlatformInfo',
-              'getPackageDirectoryEntry'
-            ],
-            '1': [ 'setUninstallURL', 'restartAfterDelay' ],
-            '2': [ 'sendNativeMessage' ],
-            '1-3': [ 'sendMessage' ]
-          }
+          '1': [ 'setUninstallURL', 'restartAfterDelay' ],
+          '2': [ 'sendNativeMessage' ],
+          '1-3': [ 'sendMessage' ]
         }
-      );
+      });
+
+      if( ns.runtime.onRestartRequired || ns.runtime.onBrowserUpdateAvailable ){
+        runtime.onRestartRequired =
+          ns.runtime.onRestartRequired || ns.runtime.onBrowserUpdateAvailable;
+      }
 
       runtime.onMessage = {};
       {
+        /** @type {array<object>} */
         let listeners = [];
         runtime.onMessage.addListener = callback => {
           let listener = ( message, sender, reply ) => {
@@ -348,20 +482,30 @@ let Browser = ( () => {
               returnValue.then( arg => { reply( arg ); });
             }
             return true;
-            // Chrome: If you want to asynchronously use sendResponse, add return true; to the onMessage event handler.
+            // Chrome: If you want to asynchronously use sendResponse, add return true;
+            // to the onMessage event handler.
             // FF: The listener function can return either a Boolean or a Promise.
           };
           ns.runtime.onMessage.addListener( listener );
-          listeners.push( listener );
+          listeners.push({ 'original': callback, 'modified': listener });
         };
-        runtime.onMessage.hasListener = callback => (
-          listeners.indexOf( callback ) !== -1
+
+        runtime.onMessage.hasListener = callback => Boolean(
+          _.find( listeners, ({ original }) => original === callback )
         );
+
         runtime.onMessage.removeListener = callback => {
-          _.remove( listeners, item => item === callback );
+          /** @type {array} */
+          let removed = _.remove(
+            listeners, ({ original }) => original === callback
+          );
+          if( !removed.length ) return;
+
+          removed.forEach( ({ modified }) => {
+            ns.runtime.onMessage.removeListener( modified );
+          });
         };
       }
-
 
       runtime.getBackgroundPage = () => {
         let returnValue;
@@ -377,70 +521,132 @@ let Browser = ( () => {
       return runtime;
     })(),
 
-    /** Privacy */
-    'privacy': ( () => {
-      let privacy = {};
-      if( !ns.privacy ) return ns.privacy;
+    /** Storage (complete)
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/storage
+    https://developer.chrome.com/extensions/storage */
+    'storage': ( () => {
+      if( !ns.storage || !isChrome ) return ns.storage;
 
-      _.transform(
-        [ 'IPHandlingPolicy', 'services', 'websites' ],
+      let storage = bindObjects({}, ns.storage, [ 'onChanged' ] );
+
+      return _.transform(
+        [ 'sync', 'local', 'managed' ],
         ( carry, property ) => {
-          carry[ property ] = ns.privacy[ property ];
+          if( !ns.storage[ property ] ) return;
+          carry[ property ] = bindPromiseReturn({}, ns.storage[ property ], {
+            '0': [ 'clear' ],
+            '1': [ 'remove', 'set', 'get', 'getBytesInUse' ]
+          });
         },
-        privacy
+        storage
       );
+    })(),
 
-      if( ns.privacy.network ) {
-        let network = {};
+    /** Tabs (complete)
+    https://developer.chrome.com/extensions/tabs
+    https://developer.mozilla.org/ru/Add-ons/WebExtensions/API/tabs */
+    'tabs': ( () => {
+      if( !ns.tabs ) return ns.tabs;
 
-        // object
-        network.networkPredictionEnabled =
-          ns.privacy.network.networkPredictionEnabled;
+      let tabs = bindAll( {}, ns.tabs, {
+        'objects': [
+          'onCreated', 'onUpdated', 'onMoved', 'onSelectionChanged',
+          'onActiveChanged', 'onActivated', 'onHighlightChanged',
+          'onHighlighted', 'onDetached', 'onAttached', 'onRemoved',
+          'onReplaced', 'onZoomChange', 'TAB_ID_NONE'
+        ],
+        'methods': [ 'connect' ]
+      });
 
-        // WebRTC
-        if( ns.privacy.network.webRTCIPHandlingPolicy ) {
-          network.webRTCIPHandlingPolicy = buildBrowserSetting(
-            ns.privacy.network.webRTCIPHandlingPolicy
-          );
-        }
-        // Deprecated features will be only if new are not available
-        else if( ns.privacy.network.webRTCNonProxiedUdpEnabled || ns.privacy.network.webRTCMultipleRoutesEnabled ) {
-          _.transform(
-            [ 'webRTCNonProxiedUdpEnabled', 'webRTCMultipleRoutesEnabled' ],
-            ( carry, property ) => {
-              if( !ns.privacy.network[ property ] ) return;
-              carry[ property ] = buildBrowserSetting(
-                ns.privacy.network[ property ]
-              );
-            },
-            network
-          );
-        }
-
-        if( ns.privacy.network.networkPredictionEnabled ) {
-          network.networkPredictionEnabled = buildBrowserSetting(
-            ns.privacy.network.networkPredictionEnabled
-          );
-        }
-
-        // FF only feature
-        if( ns.privacy.network.peerConnectionEnabled ) {
-          network.peerConnectionEnabled = buildBrowserSetting(
-            ns.privacy.network.peerConnectionEnabled
-          );
-        }
-
-        privacy.network = network;
+      if( isChrome ){
+        bindPromiseReturn( tabs, ns.tabs, {
+          '0': [ 'getCurrent' ],
+          '1': [
+            'get', 'create', 'duplicate', 'highlight', 'remove',
+            'detectLanguage', 'getZoom', 'discard'
+          ],
+          '2': [
+            'update', 'move', 'reload', 'captureVisibleTab',
+            'executeScript', 'insertCSS', 'setZoom', 'setZoomSettings'
+          ],
+          '2-3': [ 'sendMessage' ] // 3 only from Chrome 41+
+       });
+      }
+      else{
+        bindMethods( tabs, ns.tabs, [
+          'getCurrent', 'get', 'create', 'duplicate', 'highlight',
+          'remove', 'detectLanguage', 'getZoom', 'discard', 'update', 'move',
+          'reload', 'captureVisibleTab', 'executeScript', 'insertCSS',
+          'setZoom', 'setZoomSettings', 'sendMessage'
+        ] );
       }
 
-      return privacy;
+      if( ns.tabs.query ){
+        // 0 arguments support
+        tabs.query = ( queryInfo = {}) => (
+          isChrome
+          ? new Promise( resolve => { ns.tabs.query( queryInfo, resolve ); })
+          : ns.tabs.query( queryInfo )
+        );
+      }
+
+      return tabs;
+    })(),
+
+    /** TopSites (complete)
+    https://developer.chrome.com/extensions/topSites
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/topSites */
+    'topSites': ( () => {
+      if( !ns.topSites || !isChrome ) return ns.topSites;
+
+      return bindPromiseReturn({}, ns.topSites, { '0': [ 'get' ] });
+    })(),
+
+    /** WebNavigation (complete)
+    https://developer.chrome.com/extensions/webNavigation
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webNavigation */
+    'webNavigation': ( () => {
+      if( !ns.webNavigation || !isChrome ) return ns.webNavigation;
+
+      let webNavigation = {};
+
+      bindAll( webNavigation, ns.webNavigation, {
+        'objects': [
+          'onBeforeNavigate', 'onCommitted', 'onDOMContentLoaded',
+          'onCompleted', 'onErrorOccurred', 'onCreatedNavigationTarget',
+          'onReferenceFragmentUpdated', 'onTabReplaced',
+          'onHistoryStateUpdated'
+        ],
+        'promises': {
+          '1': [ 'getFrame', 'getAllFrames' ]
+        }
+      });
+
+      return webNavigation;
+    })(),
+
+    /** Windows (complete)
+    https://developer.chrome.com/extensions/windows
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/windows */
+    'windows': ( () => {
+      if( !ns.windows || !isChrome ) return ns.windows;
+
+      let windows = {
+        get 'WINDOW_ID_NONE': () => ns.windows.WINDOW_ID_NONE,
+        get 'WINDOW_ID_CURRENT': () => ns.windows.WINDOW_ID_CURRENT
+      };
+
+      return bindAll( windows, ns.windows, {
+       'objects': [ 'onCreated', 'onRemoved', 'onFocusChanged' ],
+       'promises': {
+         '1': [ 'remove' ],
+         '2': [ 'update' ],
+         '0-1': [ 'getCurrent', 'getLastFocused', 'getAll', 'create' ]
+         '1-2': [ 'get' ]
+       }
+      });
     })()
   };
-
-  // Pure link
-  [ 'extension', 'i18n', 'browserAction' ].forEach( property => {
-    output[ property ] = ns[ property ];
-  });
 
   return output;
 })();
