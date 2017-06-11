@@ -22,9 +22,6 @@ identity
 idle
 notifications
 omnibox
-pageAction
-sessions
-sidebarAction
 + only chrome API - check */
 
 /** Create BrowserSetting object with promise-based return
@@ -48,23 +45,19 @@ let buildBrowserSetting = browserObject => {
   isChrome
     ? bindPromiseReturn({}, browserObject, { '1': [ 'set' ] })
     : bindMethods({}, browserObject, [ 'set' ] );
-  _.transform(
-    [ 'get', 'clear' ],
-    ( carry, property ) => {
-      // Support of 0 arguments
-      carry[ property ] = ( arg = {}) => (
-        isChrome
-          ? new Promise( resolve => {
-            browserObject[ property ]( arg, firstArg => {
-              if( firstArg === undefined ) resolve( true );
-              else resolve( firstArg );
-            });
-          })
-          : browserObject[ property ]( arg )
-      );
-    },
-    returnObject
-  );
+  _.transform( [ 'get', 'clear' ], ( carry, property ) => {
+    // Support of 0 arguments
+    carry[ property ] = ( arg = {}) => (
+      isChrome
+        ? new Promise( resolve => {
+          browserObject[ property ]( arg, firstArg => {
+            if( firstArg === undefined ) resolve( true );
+            else resolve( firstArg );
+          });
+        })
+        : browserObject[ property ]( arg )
+    );
+  }, returnObject );
 
   if( browserObject.onChange ) returnObject.onChange = browserObject.onChange;
 
@@ -207,7 +200,7 @@ let Browser = ( () => {
     /** Web Request
     TODO actual check */
     'webRequest': ( () => {
-      if( !ns.webRequest ) return ns.webRequest;
+      if( !ns.webRequest ) return;
       let webRequest = {};
 
       bindObjects( webRequest, ns.webRequest, [
@@ -216,19 +209,19 @@ let Browser = ( () => {
         'onCompleted', 'onErrorOccurred'
       ] );
 
-      // NOTE conflict of realisations
+      // NOTE conflict of realizations
       if( ns.webRequest.onAuthRequired ) {
         webRequest.onAuthRequired = {
-          'addListener': ( ...Args ) => {
+          'addListener': ( ...args ) => {
             /** To handle the request asynchronously, include "blocking"
             in the extraInfoSpec parameter (3rd argument) and return a Promise that is resolved with
             a BlockingResponse object, with its cancel or its authCredentials
             properties set. */
             let condition =
-              Args.length === 3 &&
-              ~Args[ 2 ].indexOf( 'asyncBlocking' ) && !isChrome;
+              args.length === 3 &&
+              ~args[ 2 ].indexOf( 'asyncBlocking' ) && !isChrome;
             if( condition ) {
-              Args[ 2 ] = Args[ 2 ].map(
+              args[ 2 ] = args[ 2 ].map(
                 item => item !== 'asyncBlocking' ? item : 'blocking'
               );
             }
@@ -247,7 +240,7 @@ let Browser = ( () => {
     https://developer.chrome.com/extensions/browserAction
     https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/browserAction */
     'browserAction': ( () => {
-      if( !ns.browserAction ) return ns.browserAction;
+      if( !ns.browserAction ) return;
 
       let browserAction = bindAll({}, ns.browserAction, {
         'objects': [ 'onClicked' ],
@@ -270,13 +263,17 @@ let Browser = ( () => {
         [ 'getBadgeText', 'getTitle', 'getPopup', 'getBadgeBackgroundColor' ],
         ( carry, property ) => {
           if( !ns.browserAction[ property ] ) return;
-          carry[ property ] = ( details = {}) => (
-            isChrome
-            ? new Promise( resolve => {
-              ns.browserAction[ property ]( details, resolve );
-            })
-            : ns.browserAction[ property ]( details )
-          );
+          carry[ property ] = ( details = {}) => {
+            if( typeof details === 'number' ) details = { 'tabId': details };
+
+            return (
+              isChrome
+              ? new Promise( resolve => {
+                ns.browserAction[ property ]( details, resolve );
+              })
+              : ns.browserAction[ property ]( details )
+            );
+          };
         },
         browserAction
       );
@@ -337,6 +334,44 @@ let Browser = ( () => {
           '2': [ 'setEnabled', 'uninstall', 'setLaunchType', 'generateAppForLink' ]
         }
       });
+    })(),
+
+    /** PageAction (complete)
+    https://developer.chrome.com/extensions/pageAction
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/pageAction */
+    'pageAction': ( () => {
+      if( !ns.pageAction ) return;
+
+      let pageAction = bindAll({}, ns.pageAction, {
+        'objects': [ 'onClicked' ],
+        'methods': [ 'hide', 'show', 'setTitle', 'setPopup' ]
+      });
+
+      if( isChrome ){
+        bindPromiseReturn(
+          pageAction, ns.pageAction, { '1': [ 'setIcon' ] }
+        );
+      }
+      else{
+        bindMethods( pageAction, ns.pageAction, [ 'setIcon' ] );
+      }
+
+      // tabId without object
+      return _.transform( [ 'getTitle', 'getPopup' ], ( carry, property ) => {
+        if( !ns.pageAction[ property ] ) return;
+
+        carry[ property ] = details => {
+          if( typeof details === 'number' ) details = { 'tabId': details };
+
+          return (
+            isChrome
+            ? new Promise( resolve => {
+              ns.pageAction[ property ]( details, resolve );
+            })
+            : ns.pageAction[ property ]( details )
+          );
+        };
+      }, pageAction );
     })(),
 
     /** Permissions (complete)
@@ -521,6 +556,41 @@ let Browser = ( () => {
       return runtime;
     })(),
 
+    /** Sessions (complete)
+    https://developer.chrome.com/extensions/sessions
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/sessions */
+    'sessions': ( () => {
+      if( !ns.sessions || !isChrome ) return ns.sessions;
+
+      let sessions = {
+        get 'MAX_SESSION_RESULTS': () => ns.sessions.MAX_SESSION_RESULTS
+      };
+
+      return bindAll( sessions, ns.sessions, {
+        'objects': [ 'onChanged' ],
+        'promises': { '0-1': [ 'getDevices', 'getRecentlyClosed', 'restore' ] }
+      });
+    })(),
+
+    /** SidebarAction (FF only)
+    https://developer.mozilla.org/ru/Add-ons/WebExtensions/API/sidebarAction */
+    'sidebarAction': ( () => {
+      if( !ns.sidebarAction ) return;
+
+      let sidebarAction = bindMethods({}, ns.sidebarAction, [
+        'setPanel', 'setTitle', 'setIcon'
+      ] );
+
+      // 0 arguments support
+      return _.transform( [ 'getPanel', 'getTitle' ], ( carry, property ) => {
+        if( !ns.sidebarAction[ property ] ) return;
+        carry[ property ] = ( details = {}) => {
+          if( typeof details === 'number' ) details = { 'tabId': details };
+          return ns.sidebarAction[ property ]( details );
+        };
+      }, sidebarAction );
+    })(),
+
     /** Storage (complete)
     https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/storage
     https://developer.chrome.com/extensions/storage */
@@ -546,7 +616,7 @@ let Browser = ( () => {
     https://developer.chrome.com/extensions/tabs
     https://developer.mozilla.org/ru/Add-ons/WebExtensions/API/tabs */
     'tabs': ( () => {
-      if( !ns.tabs ) return ns.tabs;
+      if( !ns.tabs ) return;
 
       let tabs = bindAll( {}, ns.tabs, {
         'objects': [
@@ -647,6 +717,11 @@ let Browser = ( () => {
       });
     })()
   };
+
+  // Delete all unused object keys
+  _.forIn( output, ( value, key ) => {
+    if( !value ) delete output[ key ];
+  });
 
   return output;
 })();

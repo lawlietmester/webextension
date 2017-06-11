@@ -26,10 +26,10 @@ Only ```lodash``` for most cases. If you need to support Chrome 31-, you need to
 
 ```javascript
 if( typeof browser === 'undefined' ){
-    // Chrome
+  // Chrome
 }
 else{
-    // FF
+  // FF
 }
 ```
 
@@ -37,37 +37,80 @@ For more compicated cases (like embedded webextestions for FF + Chrome):
 
 ```javascript
 let vChrome = () => {
-    // Return some object
+  // Return some object
 };
 let vFF = () => {
-    // Return some object
+  // Return some object
 };
 return typeof browser === 'undefined' ? vChrome() : vFF();
 ```
 
 ## Syntax features
 
+### Zero arguments support
+
+In some cases you are using empty object as first arguments. For such cases you can use zero arguments instead of empty object.
+
+__Example:__
+Old code:
+
+```javascript
+chrome.tabs.query({}, tabs => {})
+```
+
+New code:
+
+```javascript
+Browser.tabs.query().then( tabs => {})
+```
+
+__List of methods with zero arguments support:__
+
+* browser.browserAction.getBadgeText
+* browser.browserAction.getTitle
+* browser.browserAction.getPopup
+* browser.browserAction.getBadgeBackgroundColor
+* browser.sidebarAction.getTitle
+* browser.sidebarAction.getPanel
+
 ### [BrowserSetting](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/types/BrowserSetting)
 
 You can use .get and .clear without arguments. All 3 methods are promise-based.
 As for 54th FF, there is no onChange object in it.
 
+### browser.browserAction
+
+`.getBadgeText`, `.getTitle`, `.getPopup`, `.getBadgeBackgroundColor` could be ue used with tabId as first argument. Like:
+
+```javascript
+Browser.browserAction.getPopup( 5 ).then( url => {
+  // Use url
+});
+```
+
 ### browser.privacy.network
 
-If .webRTCIPHandlingPolicy exist, deprecated fetures like .webRTCNonProxiedUdpEnabled
-and .webRTCMultipleRoutesEnabled are not provided.
+If `.webRTCIPHandlingPolicy` exist, deprecated fetures like `.webRTCNonProxiedUdpEnabled` and `.webRTCMultipleRoutesEnabled` are not provided.
 
-### browser.tabs.query
+### browser.pageAction
 
-You can use it without arguments.
+`.getTitle`, `.getPopup` could be ue used with tabId as first argument. Like:
 
-### browser.browserAction.getBadgeText
+```javascript
+Browser.pageAction.getTitle( 5 ).then( title => {
+  // Use title
+});
+```
 
-You can use it without arguments.
+### browser.sidebarAction
 
-### browser.browserAction.getTitle
+`.getPanel`, `.getTitle` could be ue used with tabId as first argument. Like:
 
-You can use it without arguments.
+```javascript
+Browser.sidebarAction.getTitle( 5 ).then( title => {
+  // Use title
+});
+```
 
 ## Supported browsers
 
@@ -85,6 +128,6 @@ First I need to create good chrome/ff support.
 
 ## TODO
 
-Поддержка deprecated для хрома вместо обычных -> сделать
-
-tabs.query -> no arguments
+* Написать про особенность двойного использования (background/popup) и onmessage
+* Поддержка эмуляции FF .onChange
+* Поддержка deprecated для хрома вместо обычных -> сделать
