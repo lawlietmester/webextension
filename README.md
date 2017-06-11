@@ -88,9 +88,39 @@ Browser.browserAction.getPopup( 5 ).then( url => {
 });
 ```
 
+### browser.contextualIdentities.query
+
+You can use it with name as argument. Like:
+
+```javascript
+Browser.contextualIdentities.query( 'name' ).then( identities => {
+  // Some code
+});
+```
+
+### browser.history
+
+`.addUrl`, `.getVisits`, `.deleteUrl` could be ue used with url as first argument. Like:
+
+```javascript
+Browser.history.addUrl( 'http://mysite.com' ).then( url => {
+  // Addition successfull
+});
+```
+
+### browser.identity.removeCachedAuthToken
+
+You can use it with token as argument. Like:
+
+```javascript
+Browser.identity.removeCachedAuthToken( 'f8k48fk48fk' ).then( () => {
+  // Removal complete
+});
+```
+
 ### browser.privacy.network
 
-If `.webRTCIPHandlingPolicy` exist, deprecated fetures like `.webRTCNonProxiedUdpEnabled` and `.webRTCMultipleRoutesEnabled` are not provided.
+If `.webRTCIPHandlingPolicy` exist, deprecated features like `.webRTCNonProxiedUdpEnabled` and `.webRTCMultipleRoutesEnabled` are not provided.
 
 ### browser.pageAction
 

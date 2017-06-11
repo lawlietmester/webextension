@@ -6,23 +6,40 @@ import _ from 'lodash';
 let isChrome = typeof browser === 'undefined';
 
 /* TODO
-alarms
-bookmarks
-browsingData
-commands
-contextMenus
-contextualIdentities
-cookies
+accessibilityFeatures
+certificateProvider
+debugger
+declarativeContent
+desktopCapture
+documentScan
+enterprise.deviceAttributes
+enterprise.platformKeys
+fileBrowserHandler
+fileSystemProvider
+fontSettings
+gcm
+input.ime
+instanceID
+networking.config
+omnibox
+pageCapture
+permissions
+platformKeys
+power
+printerProvider
+system.cpu
+system.memory
+system.storage
+tabCapture
+tts
+ttsEngine
+vpnProvider
+webstore
+
 devtools.inspectedWindow
 devtools.network
 devtools.panels
-downloads
-history
-identity
-idle
-notifications
-omnibox
-+ only chrome API - check */
+*/
 
 /** Create BrowserSetting object with promise-based return
 @param {object} browserObject
@@ -187,7 +204,6 @@ let bindAll = ( object, browserObject, properties ) => {
     bindPromiseReturn( object, browserObject, properties.promises );
   }
 
-
   return object;
 };
 
@@ -236,6 +252,44 @@ let Browser = ( () => {
       return webRequest;
     })(),
 
+    /** Alarms (complete)
+    https://developer.chrome.com/extensions/alarms
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/alarms */
+    'alarms': ( () => {
+      if( !ns.alarms || !isChrome ) return ns.alarms;
+
+      return bindAll({}, ns.bookmarks, {
+        'objects': [ 'onAlarm' ],
+        'methods': [ 'create' ],
+        'promises': {
+          '0': [ 'getAll', 'clearAll' ],
+          '0-1': [ 'clear', 'get' ]
+        }
+      });
+    })(),
+
+    /** Bookmarks (complete)
+    https://developer.chrome.com/extensions/bookmarks
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/bookmarks */
+    'bookmarks': ( () => {
+      if( !ns.bookmarks || !isChrome ) return ns.bookmarks;
+
+      return bindAll({}, ns.bookmarks, {
+        'objects': [
+          'onCreated', 'onRemoved', 'onChanged', 'onMoved',
+          'onChildrenReordered', 'onImportBegan', 'onImportEnded'
+        ],
+        'promises': {
+          '0': [ 'getTree' ],
+          '1': [
+            'create', 'get', 'getChildren', 'getRecent', 'getSubTree',
+            'removeTree', 'search'
+          ],
+          '2': [ 'move', 'update' ]
+        }
+      });
+    })(),
+
     /** BrowserAction (complete)
     https://developer.chrome.com/extensions/browserAction
     https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/browserAction */
@@ -279,6 +333,113 @@ let Browser = ( () => {
       );
     })(),
 
+    /** BrowsingData (complete)
+    https://developer.chrome.com/extensions/browsingData
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/browsingData */
+    'browsingData': ( () => {
+      if( !ns.browsingData || !isChrome ) return ns.browsingData;
+
+      return bindPromiseReturn({}, ns.browsingData, {
+        '0': [ 'settings' ],
+        '1': [
+          'removeAppcache', 'removeCache', 'removeCookies', 'removeDownloads',
+          'removeFileSystems', 'removeFormData', 'removeHistory',
+          'removeIndexedDB', 'removeLocalStorage', 'removePluginData',
+          'removePasswords', 'removeWebSQL'
+        ],
+        '2': [ 'remove' ]
+      });
+    })(),
+
+    /** Commands (complete)
+    https://developer.chrome.com/extensions/commands
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/commands */
+    'commands': ( () => {
+      if( !ns.commands || !isChrome ) return ns.commands;
+
+      return bindAll({}, ns.commands, {
+        'objects': [ 'onCommand' ],
+        'promises': { '0': [ 'getAll' ] }
+      });
+    })(),
+
+    /** ContextMenus (complete)
+    https://developer.chrome.com/extensions/contextMenus
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/contextMenus */
+    'contextMenus': ( () => {
+      if( !ns.contextMenus || !isChrome ) return ns.contextMenus;
+
+      let contextMenus = {
+        get 'ACTION_MENU_TOP_LEVEL_LIMIT': () => (
+          ns.contextMenus.ACTION_MENU_TOP_LEVEL_LIMIT
+        )
+      };
+
+      return bindAll( contextMenus, ns.contextMenus, {
+        'objects': [ 'onClicked' ],
+        'promises': {
+          '0': [ 'removeAll' ],
+          '1': [ 'create', 'remove' ],
+          '2': [ 'update' ]
+        }
+      });
+    })(),
+
+    /** ContextualIdentities (FF only, complete)
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/contextualIdentities */
+    'contextualIdentities': ( () => {
+      if( !ns.contextualIdentities ) return;
+
+      let contextualIdentities = bindMethods({}, ns.contextualIdentities, [
+        'create', 'get', 'remove', 'update'
+      ] );
+
+      contextualIdentities.query = details => {
+        if( typeof details === 'string' ) details = { 'name': details };
+        return ns.contextualIdentities.query( details );
+      };
+
+      return contextualIdentities;
+    })(),
+
+    /** Cookies (complete)
+    https://developer.chrome.com/extensions/cookies
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/cookies */
+    'cookies': ( () => {
+      if( !ns.cookies || !isChrome ) return ns.cookies;
+
+      return bindAll({}, ns.cookies, {
+        'objects': [ 'onChanged' ],
+        'promises': {
+          '0': [ 'getAllCookieStores' ],
+          '1': [ 'get', 'getAll', 'set', 'remove' ]
+        }
+      });
+    })(),
+
+    /** Downloads (complete)
+    https://developer.chrome.com/extensions/downloads
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/downloads */
+    'downloads': ( () => {
+      if( !ns.downloads || !isChrome ) return ns.downloads;
+
+      return bindAll({}, ns.downloads, {
+        'objects': [
+          'onCreated', 'onErased', 'onChanged', 'onDeterminingFilename'
+        ],
+        'methods': [
+          'drag', 'open', 'setShelfEnabled', 'show', 'showDefaultFolder'
+        ],
+        'promises': {
+          '1': [
+            'acceptDanger', 'cancel', 'download', 'erase', 'pause',
+            'removeFile', 'resume', 'search'
+          ],
+          '1-2': [ 'getFileIcon' ]
+        }
+      });
+    })(),
+
     /** Extension (complete)
     https://developer.chrome.com/extensions/extension
     https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/extension */
@@ -298,7 +459,105 @@ let Browser = ( () => {
       });
     })(),
 
-    /** i18n
+    /** History (complete)
+    https://developer.chrome.com/extensions/history
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/history */
+    'history': ( () => {
+      if( !ns.history ) return;
+
+      let history = bindObjects(
+        {}, ns.history, [ 'onVisited', 'onVisitRemoved' ]
+      );
+
+      if( isChrome ){
+        bindPromiseReturn( history, ns.history, {
+          '0': [ 'deleteAll' ],
+          '1': [ 'deleteRange', 'search' ]
+        });
+      }
+      else{
+        bindMethods( history, ns.history, [
+          'deleteAll', 'deleteRange', 'search'
+        ] );
+      }
+
+      // Support of url as argument
+      return _.transform(
+        [ 'addUrl', 'deleteUrl', 'getVisits' ],
+        ( carry, property ) => {
+          if( !ns.history[ property ] ) return;
+          carry[ property ] = details => {
+            if( typeof details === 'string' ) details = { 'url': details };
+
+            return (
+              isChrome
+              ? new Promise( resolve => {
+                ns.history[ property ]( details, resolve );
+              })
+              : ns.history[ property ]( details )
+            );
+          };
+        },
+        history
+      );
+    })(),
+
+    /** Identity (complete)
+    https://developer.chrome.com/extensions/identity
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/identity */
+    'identity': ( () => {
+      if( !ns.identity ) return;
+
+      let identity = bindAll({}, ns.identity, {
+        'objects': [ 'onSignInChanged' ],
+        'methods': [ 'getRedirectURL' ]
+      });
+
+      if( isChrome ){
+        bindPromiseReturn( identity, ns.identity, {
+          '0': [ 'getAccounts', 'getProfileUserInfo' ],
+          '0-1': [ 'getAuthToken' ],
+          '1': [ 'launchWebAuthFlow' ]
+        });
+      }
+      else{
+        bindMethods( identity, ns.identity, [
+          'getAccounts', 'getProfileUserInfo', 'getAuthToken',
+          'launchWebAuthFlow'
+        ] );
+      }
+
+      if( ns.identity.removeCachedAuthToken ){
+        identity.removeCachedAuthToken = details => {
+          if( typeof details === 'string' ) details = { 'token': details };
+
+          return (
+            isChrome
+            ? new Promise( resolve => {
+              ns.identity.removeCachedAuthToken( details, resolve );
+            })
+            : ns.identity.removeCachedAuthToken( details )
+          );
+        };
+      }
+
+      return identity;
+    })(),
+
+    /** Idle (complete)
+    https://developer.chrome.com/extensions/idle
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/idle */
+    'idle': ( () => {
+      if( !ns.idle || !isChrome ) return ns.idle;
+
+      return bindAll({}, ns.idle, {
+        'objects': [ 'onStateChanged' ],
+        'methods': [ 'setDetectionInterval' ],
+        'promises': { '1': [ 'queryState' ] }
+      });
+    })(),
+
+    /** i18n (complete)
     https://developer.chrome.com/extensions/i18n
     https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/i18n */
     'i18n': ( () => {
@@ -335,6 +594,31 @@ let Browser = ( () => {
         }
       });
     })(),
+
+    /** Notifications (complete)
+    https://developer.chrome.com/extensions/notifications
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/notifications */
+    'notifications': ( () => {
+      if( !ns.notifications || !isChrome ) return ns.notifications;
+
+      return bindAll({}, ns.notifications, {
+        'objects': [
+          'onClosed', 'onClicked', 'onButtonClicked',
+          'onPermissionLevelChanged', 'onShowSettings'
+        ],
+        'promises': {
+          '0': [ 'getAll', 'getPermissionLevel' ],
+          '1': [ 'clear' ],
+          '1-2': [ 'create' ],
+          '2': [ 'update' ]
+        }
+      });
+    })(),
+
+    /** Omnibox (complete, no async methods)
+    https://developer.chrome.com/extensions/omnibox
+    https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/omnibox */
+    get 'omnibox': () => ns.omnibox,
 
     /** PageAction (complete)
     https://developer.chrome.com/extensions/pageAction
