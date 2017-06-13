@@ -5,6 +5,9 @@ import _ from 'lodash';
 /** @type {boolean} */
 let isChrome = typeof browser === 'undefined';
 
+/** @type {object} */
+let ns = isChrome ? chrome : browser;
+
 /* TODO
 accessibilityFeatures
 certificateProvider
@@ -88,14 +91,10 @@ let buildBrowserSetting = browserObject => {
 @param {array<string>} properties
 @return {object} same object */
 let bindObjects = ( object, browserObject, properties ) => (
-  _.transform(
-    properties,
-    ( carry, property ) => {
-      if( !browserObject[ property ] ) return;
-      carry[ property ] = browserObject[ property ];
-    },
-    object
-  )
+  _.transform( properties, ( carry, property ) => {
+    if( !browserObject[ property ] ) return;
+    carry[ property ] = browserObject[ property ];
+  }, object )
 );
 
 
@@ -105,15 +104,12 @@ let bindObjects = ( object, browserObject, properties ) => (
 @param {array<string>} properties
 @return {object} same object */
 let bindBrowserSettings = ( object, browserObject, properties ) => (
-  _.transform(
-    properties,
-    ( carry, property ) => {
-      if( !browserObject[ property ] ) return;
-      carry[ property ] = buildBrowserSetting( browserObject[ property ] );
-    },
-    object
-  )
+  _.transform( properties, ( carry, property ) => {
+    if( !browserObject[ property ] ) return;
+    carry[ property ] = buildBrowserSetting( browserObject[ property ] );
+  }, object )
 );
+
 
 /** Bind methods
 @param {object} object
@@ -121,15 +117,12 @@ let bindBrowserSettings = ( object, browserObject, properties ) => (
 @param {array<string>} properties
 @return {object} same object */
 let bindMethods = ( object, browserObject, properties ) => (
-  _.transform(
-    properties,
-    ( carry, property ) => {
-      if( !browserObject[ property ] ) return;
-      carry[ property ] = browserObject[ property ].bind( browserObject );
-    },
-    object
-  )
+  _.transform( properties, ( carry, property ) => {
+    if( !browserObject[ property ] ) return;
+    carry[ property ] = browserObject[ property ].bind( browserObject );
+  }, object )
 );
+
 
 /** Modifies object for typical case of promise return binding
 @param {object} object
@@ -181,6 +174,61 @@ let bindPromiseReturn = ( object, browserObject, properties ) => {
   return object;
 };
 
+
+/** Modifies object for typical case of promise return binding
+@param {object} object
+@param {object} browserObject
+@param {object<array>} properties - NOTE number of agruments does not count callback
+@return {object} same object */
+let bindFullPromiseReturn = ( object, browserObject, properties ) => {
+  if( Array.isArray( properties ) ) properties = { '1': properties };
+
+  _.forIn( properties, ( properties, argsCount ) => {
+    argsCount = !/\-/.test( argsCount )
+      ? Number( argsCount )
+      : argsCount.split( '-' ).map( item => Number( item ) );
+
+    _.transform(
+      properties,
+      ( carry, property ) => {
+        if( !browserObject[ property ] ) return;
+        carry[ property ] = ( ...args ) => new Promise( ( resolve, reject ) => {
+          let newArgs = ( () => {
+            /** @type {integer} */
+            let length = ( () => {
+              if( typeof argsCount === 'number' ) return argsCount;
+
+              let length = argsCount[ 0 ];
+              if( args.length > length ) length = args.length;
+              if( length > argsCount[ 1 ] ) length = argsCount[ 1 ];
+              return length;
+            })();
+
+            return _.fill( Array( length ), null ).map(
+              ( x, index ) => args[ index ]
+            );
+          })();
+
+          // Adding callback as last argument
+          newArgs.push( firstArg => {
+            if( ns.runtime.lastError ) {
+              reject( ns.runtime.lastError ); return;
+            }
+            if( firstArg === undefined ) resolve();
+            else resolve( firstArg );
+          });
+
+          browserObject[ property ].apply( browserObject, newArgs );
+        });
+      },
+      object
+    );
+  });
+
+  return object;
+};
+
+
 /** Bind objects, methods, promise return
 @param {object} object
 @param {object} browserObject
@@ -194,7 +242,7 @@ let bindAll = ( object, browserObject, properties ) => {
   if( properties.objects ) {
     bindObjects( object, browserObject, properties.objects );
   }
-  if( properties.browserSettings ){
+  if( properties.browserSettings ) {
     bindBrowserSettings( object, browserObject, properties.browserSettings );
   }
   if( properties.methods ) {
@@ -210,8 +258,6 @@ let bindAll = ( object, browserObject, properties ) => {
 
 /** @type {object} - analog of chrome|browser */
 let Browser = ( () => {
-  let ns = isChrome ? chrome : browser;
-
   let output = {
     /** Web Request
     TODO actual check */
@@ -243,7 +289,7 @@ let Browser = ( () => {
             }
 
             return ns.webRequest.onAuthRequired.addListener.apply(
-              ns.webRequest.onAuthRequired, Args
+              ns.webRequest.onAuthRequired, args
             );
           }
         };
@@ -299,17 +345,27 @@ let Browser = ( () => {
       let browserAction = bindAll({}, ns.browserAction, {
         'objects': [ 'onClicked' ],
         'methods': [
-          'setTitle', 'setPopup', 'setBadgeText', 'setBadgeBackgroundColor',
+          'setTitle', 'setPopup', 'setBadgeBackgroundColor',
           'enable', 'disable'
         ]
       });
-      if( isChrome ){
+      if( isChrome ) {
         bindPromiseReturn(
           browserAction, ns.browserAction, { '1': [ 'setIcon' ] }
         );
       }
-      else{
+      else {
         bindMethods( browserAction, ns.browserAction, [ 'setIcon' ] );
+      }
+
+      if( ns.browserAction.setBadgeText ) {
+        browserAction.setBadgeText = details => {
+          if( typeof details === 'string' ) details = { 'text': details };
+          ns.browserAction.setBadgeText( details );
+        };
+        browserAction.removeBadgeText = () => {
+          browserAction.setBadgeText( '' );
+        };
       }
 
       // 0 arguments support
@@ -370,9 +426,9 @@ let Browser = ( () => {
       if( !ns.contextMenus || !isChrome ) return ns.contextMenus;
 
       let contextMenus = {
-        get 'ACTION_MENU_TOP_LEVEL_LIMIT': () => (
-          ns.contextMenus.ACTION_MENU_TOP_LEVEL_LIMIT
-        )
+        get 'ACTION_MENU_TOP_LEVEL_LIMIT'() {
+          return ns.contextMenus.ACTION_MENU_TOP_LEVEL_LIMIT;
+        }
       };
 
       return bindAll( contextMenus, ns.contextMenus, {
@@ -447,8 +503,12 @@ let Browser = ( () => {
       if( !ns.extension || !isChrome ) return ns.extension;
 
       let extension = {
-        get 'lastError': () => ns.extension.lastError,
-        get 'inIncognitoContext': () => ns.extension.inIncognitoContext
+        get 'lastError'() {
+          return ns.extension.lastError;
+        },
+        get 'inIncognitoContext'() {
+          return ns.extension.inIncognitoContext;
+        }
       };
 
       return bindAll( extension, ns.extension, {
@@ -469,13 +529,13 @@ let Browser = ( () => {
         {}, ns.history, [ 'onVisited', 'onVisitRemoved' ]
       );
 
-      if( isChrome ){
+      if( isChrome ) {
         bindPromiseReturn( history, ns.history, {
           '0': [ 'deleteAll' ],
           '1': [ 'deleteRange', 'search' ]
         });
       }
-      else{
+      else {
         bindMethods( history, ns.history, [
           'deleteAll', 'deleteRange', 'search'
         ] );
@@ -513,21 +573,21 @@ let Browser = ( () => {
         'methods': [ 'getRedirectURL' ]
       });
 
-      if( isChrome ){
+      if( isChrome ) {
         bindPromiseReturn( identity, ns.identity, {
           '0': [ 'getAccounts', 'getProfileUserInfo' ],
           '0-1': [ 'getAuthToken' ],
           '1': [ 'launchWebAuthFlow' ]
         });
       }
-      else{
+      else {
         bindMethods( identity, ns.identity, [
           'getAccounts', 'getProfileUserInfo', 'getAuthToken',
           'launchWebAuthFlow'
         ] );
       }
 
-      if( ns.identity.removeCachedAuthToken ){
+      if( ns.identity.removeCachedAuthToken ) {
         identity.removeCachedAuthToken = details => {
           if( typeof details === 'string' ) details = { 'token': details };
 
@@ -563,7 +623,7 @@ let Browser = ( () => {
     'i18n': ( () => {
       if( !ns.i18n || !isChrome ) return ns.i18n;
 
-      return bindAll( {}, ns.i18n, {
+      return bindAll({}, ns.i18n, {
         'methods': [ 'getMessage', 'getUILanguage' ],
         'promises': {
           '0': [ 'getAcceptLanguages' ],
@@ -618,7 +678,7 @@ let Browser = ( () => {
     /** Omnibox (complete, no async methods)
     https://developer.chrome.com/extensions/omnibox
     https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/omnibox */
-    get 'omnibox': () => ns.omnibox,
+    get 'omnibox'() { return ns.omnibox; },
 
     /** PageAction (complete)
     https://developer.chrome.com/extensions/pageAction
@@ -631,12 +691,12 @@ let Browser = ( () => {
         'methods': [ 'hide', 'show', 'setTitle', 'setPopup' ]
       });
 
-      if( isChrome ){
+      if( isChrome ) {
         bindPromiseReturn(
           pageAction, ns.pageAction, { '1': [ 'setIcon' ] }
         );
       }
-      else{
+      else {
         bindMethods( pageAction, ns.pageAction, [ 'setIcon' ] );
       }
 
@@ -713,7 +773,7 @@ let Browser = ( () => {
       }
 
       // FF54+, chrome
-      if( ns.privacy.websites ){
+      if( ns.privacy.websites ) {
         let websites = bindBrowserSettings({}, ns.privacy.websites, [
           'hyperlinkAuditingEnabled', // FF54 + chrome
           'thirdPartyCookiesAllowed', // other only Chrome
@@ -724,7 +784,7 @@ let Browser = ( () => {
         privacy.websites = websites;
       }
 
-      if( ns.privacy.services ){ // Chrome only
+      if( ns.privacy.services ) { // Chrome only
         let services = bindBrowserSettings({}, ns.privacy.services, [
           'alternateErrorPagesEnabled',
           'autofillEnabled',
@@ -761,10 +821,10 @@ let Browser = ( () => {
       if( !ns.runtime || !isChrome ) return ns.runtime;
 
       let runtime = {
-        get 'lastError': () => ns.runtime.lastError
+        get 'lastError'() { return ns.runtime.lastError; }
       };
 
-       bindAll( runtime, ns.runtime, {
+      bindAll( runtime, ns.runtime, {
         'objects': [
           'id', 'onStartup', 'onInstalled', 'onSuspend', 'onSuspendCanceled',
           'onUpdateAvailable', 'onConnect', 'onConnectExternal',
@@ -785,7 +845,7 @@ let Browser = ( () => {
         }
       });
 
-      if( ns.runtime.onRestartRequired || ns.runtime.onBrowserUpdateAvailable ){
+      if( ns.runtime.onRestartRequired || ns.runtime.onBrowserUpdateAvailable ) {
         runtime.onRestartRequired =
           ns.runtime.onRestartRequired || ns.runtime.onBrowserUpdateAvailable;
       }
@@ -847,7 +907,7 @@ let Browser = ( () => {
       if( !ns.sessions || !isChrome ) return ns.sessions;
 
       let sessions = {
-        get 'MAX_SESSION_RESULTS': () => ns.sessions.MAX_SESSION_RESULTS
+        get 'MAX_SESSION_RESULTS'() { return ns.sessions.MAX_SESSION_RESULTS; }
       };
 
       return bindAll( sessions, ns.sessions, {
@@ -902,7 +962,7 @@ let Browser = ( () => {
     'tabs': ( () => {
       if( !ns.tabs ) return;
 
-      let tabs = bindAll( {}, ns.tabs, {
+      let tabs = bindAll({}, ns.tabs, {
         'objects': [
           'onCreated', 'onUpdated', 'onMoved', 'onSelectionChanged',
           'onActiveChanged', 'onActivated', 'onHighlightChanged',
@@ -912,21 +972,24 @@ let Browser = ( () => {
         'methods': [ 'connect' ]
       });
 
-      if( isChrome ){
+      if( isChrome ) {
         bindPromiseReturn( tabs, ns.tabs, {
           '0': [ 'getCurrent' ],
           '1': [
-            'get', 'create', 'duplicate', 'highlight', 'remove',
-            'detectLanguage', 'getZoom', 'discard'
+            'create', 'duplicate', 'highlight', 'remove', 'detectLanguage',
+            'getZoom', 'discard'
           ],
           '2': [
             'update', 'move', 'reload', 'captureVisibleTab',
             'executeScript', 'insertCSS', 'setZoom', 'setZoomSettings'
           ],
           '2-3': [ 'sendMessage' ] // 3 only from Chrome 41+
-       });
+        });
+        bindFullPromiseReturn( tabs, ns.tabs, {
+          '1': [ 'get' ]
+        });
       }
-      else{
+      else {
         bindMethods( tabs, ns.tabs, [
           'getCurrent', 'get', 'create', 'duplicate', 'highlight',
           'remove', 'detectLanguage', 'getZoom', 'discard', 'update', 'move',
@@ -935,7 +998,7 @@ let Browser = ( () => {
         ] );
       }
 
-      if( ns.tabs.query ){
+      if( ns.tabs.query ) {
         // 0 arguments support
         tabs.query = ( queryInfo = {}) => (
           isChrome
@@ -986,18 +1049,18 @@ let Browser = ( () => {
       if( !ns.windows || !isChrome ) return ns.windows;
 
       let windows = {
-        get 'WINDOW_ID_NONE': () => ns.windows.WINDOW_ID_NONE,
-        get 'WINDOW_ID_CURRENT': () => ns.windows.WINDOW_ID_CURRENT
+        get 'WINDOW_ID_NONE'() { return ns.windows.WINDOW_ID_NONE; },
+        get 'WINDOW_ID_CURRENT'() { return ns.windows.WINDOW_ID_CURRENT; }
       };
 
       return bindAll( windows, ns.windows, {
-       'objects': [ 'onCreated', 'onRemoved', 'onFocusChanged' ],
-       'promises': {
-         '1': [ 'remove' ],
-         '2': [ 'update' ],
-         '0-1': [ 'getCurrent', 'getLastFocused', 'getAll', 'create' ]
-         '1-2': [ 'get' ]
-       }
+        'objects': [ 'onCreated', 'onRemoved', 'onFocusChanged' ],
+        'promises': {
+          '1': [ 'remove' ],
+          '2': [ 'update' ],
+          '0-1': [ 'getCurrent', 'getLastFocused', 'getAll', 'create' ],
+          '1-2': [ 'get' ]
+        }
       });
     })()
   };

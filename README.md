@@ -72,6 +72,7 @@ __List of methods with zero arguments support:__
 * browser.browserAction.getBadgeBackgroundColor
 * browser.sidebarAction.getTitle
 * browser.sidebarAction.getPanel
+* browser.tabs.query
 
 ### [BrowserSetting](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/types/BrowserSetting)
 
@@ -87,6 +88,18 @@ Browser.browserAction.getPopup( 5 ).then( url => {
   // Use url
 });
 ```
+
+### browser.browserAction.setBadgeText
+
+You can use it with text as argument. Like:
+
+```javascript
+Browser.browserAction.setBadgeText( 'Icon text' );
+```
+
+### browser.browserAction.removeBadgeText
+
+This is alias of `browser.browserAction.setBadgeText({ 'text': '' })`
 
 ### browser.contextualIdentities.query
 
