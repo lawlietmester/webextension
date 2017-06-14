@@ -155,6 +155,23 @@ Browser.sidebarAction.getTitle( 5 ).then( title => {
 });
 ```
 
+### browser.tabs.reload
+
+You can use reloadProperties argument as boolean. You can use tabs array (several tabs). Like:
+
+```javascript
+Browser.tabs.reload( [ 7, 12, 50 ], true ).then( () => {
+  // Use title
+});
+```
+
+But keep in mind if at least one of tabs does not exist - promise will be rejected.
+
+### browser.webRequest.onAuthRequired.addListener
+
+For synchronous request pass "blocking" in the extraInfoSpec parameter.
+For asynchronous request pass "asyncBlocking" in the extraInfoSpec parameter and return Promise in listener. No documented part of all APIs: if you want to pass not desired asynchronous request use resolve() without any arguments.
+
 ## Supported browsers
 
 Firefox 45+, Chrome 32+

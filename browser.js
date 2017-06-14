@@ -273,24 +273,51 @@ let Browser = ( () => {
 
       // NOTE conflict of realizations
       if( ns.webRequest.onAuthRequired ) {
+        let listeners = [];
         webRequest.onAuthRequired = {
           'addListener': ( ...args ) => {
+            let original = args[ 0 ];
+            let asyncBlocking =
+              args.length === 3 && _.includes( args[ 2 ], 'asyncBlocking' );
+
             /** To handle the request asynchronously, include "blocking"
             in the extraInfoSpec parameter (3rd argument) and return a Promise that is resolved with
             a BlockingResponse object, with its cancel or its authCredentials
             properties set. */
-            let condition =
-              args.length === 3 &&
-              ~args[ 2 ].indexOf( 'asyncBlocking' ) && !isChrome;
-            if( condition ) {
+
+            // FF change asyncBlocking -> blocking
+            if( asyncBlocking && !isChrome ) {
               args[ 2 ] = args[ 2 ].map(
                 item => item !== 'asyncBlocking' ? item : 'blocking'
               );
             }
 
+            // Chrome - use callback for promises
+            let modified = original;
+            if( asyncBlocking && isChrome ) {
+              let callback = args[ 0 ];
+              let chromeCallback = ( details, asyncCallback ) => {
+                callback( details ).then( asyncCallback );
+              };
+              args[ 0 ] = modified = chromeCallback;
+            }
+            listeners.push({ original, modified });
+
             return ns.webRequest.onAuthRequired.addListener.apply(
               ns.webRequest.onAuthRequired, args
             );
+          },
+          'hasListener': callback => Boolean(
+            _.find( listeners, ({ original }) => original === callback )
+          ),
+          'removeListener': callback => {
+            /** @type {array<object>} */
+            let list = _.remove(
+              listeners, ({ original }) => original === callback
+            );
+            list.forEach( ({ modified }) => {
+              ns.webRequest.onAuthRequired.removeListener( modified );
+            });
           }
         };
       }
@@ -345,8 +372,7 @@ let Browser = ( () => {
       let browserAction = bindAll({}, ns.browserAction, {
         'objects': [ 'onClicked' ],
         'methods': [
-          'setTitle', 'setPopup', 'setBadgeBackgroundColor',
-          'enable', 'disable'
+          'setTitle', 'setPopup', 'enable', 'disable'
         ]
       });
       if( isChrome ) {
@@ -365,6 +391,14 @@ let Browser = ( () => {
         };
         browserAction.removeBadgeText = () => {
           browserAction.setBadgeText( '' );
+        };
+      }
+      if( ns.browserAction.setBadgeBackgroundColor ) {
+        browserAction.setBadgeBackgroundColor = details => {
+          if( typeof details === 'string' || Array.isArray( details ) ) {
+            details = { 'color': details };
+          }
+          ns.browserAction.setBadgeBackgroundColor( details );
         };
       }
 
@@ -980,7 +1014,7 @@ let Browser = ( () => {
             'getZoom', 'discard'
           ],
           '2': [
-            'update', 'move', 'reload', 'captureVisibleTab',
+            'update', 'move', 'captureVisibleTab',
             'executeScript', 'insertCSS', 'setZoom', 'setZoomSettings'
           ],
           '2-3': [ 'sendMessage' ] // 3 only from Chrome 41+
@@ -993,9 +1027,58 @@ let Browser = ( () => {
         bindMethods( tabs, ns.tabs, [
           'getCurrent', 'get', 'create', 'duplicate', 'highlight',
           'remove', 'detectLanguage', 'getZoom', 'discard', 'update', 'move',
-          'reload', 'captureVisibleTab', 'executeScript', 'insertCSS',
-          'setZoom', 'setZoomSettings', 'sendMessage'
+          'captureVisibleTab', 'executeScript', 'insertCSS', 'setZoom',
+          'setZoomSettings', 'sendMessage'
         ] );
+      }
+
+      if( ns.tabs.reload ) {
+        let reload = isChrome
+          ? bindPromiseReturn({}, ns.tabs, { '0-2': [ 'reload' ] }).reload
+          : ns.tabs.reload.bind( ns.tabs );
+
+        tabs.reload = ( ...args ) => {
+          let tabs, reloadProperties;
+
+          if( args.length === 2 ) {
+            [ tabs, reloadProperties ] = args;
+          }
+          else if( args.length === 1 ) {
+            let [ arg ] = args;
+            if( typeof arg === 'boolean' ) {
+              reloadProperties = arg;
+            }
+            else if( typeof arg === 'number' ) {
+              tabs = arg;
+            }
+            else if( Array.isArray( arg ) ) {
+              tabs = arg;
+            }
+            else if( arg && typeof arg === 'object' ) {
+              reloadProperties = arg;
+            }
+          }
+          if( tabs !== undefined && !Array.isArray( tabs ) ) {
+            tabs = [ tabs ];
+          }
+          if( typeof reloadProperties === 'boolean' ) {
+            reloadProperties = { 'bypassCache': reloadProperties };
+          }
+
+          if( tabs ) {
+            return Promise.all( tabs.map( id => {
+              let reloadArgs = [ id ];
+              if( reloadProperties ) reloadArgs.push( reloadProperties );
+
+              return reload.apply({}, reloadArgs );
+            }) );
+          }
+          else {
+            args = [];
+            if( reloadProperties ) args.push( reloadProperties );
+            return reload.apply({}, args );
+          }
+        };
       }
 
       if( ns.tabs.query ) {
