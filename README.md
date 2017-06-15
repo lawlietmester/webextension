@@ -97,7 +97,7 @@ You can use it with text as argument. Like:
 Browser.browserAction.setBadgeText( 'Icon text' );
 ```
 
-### browser.browserAction.removeBadgeText
+### browser.browserAction.removeBadgeText (no arguments)
 
 This is alias of `browser.browserAction.setBadgeText({ 'text': '' })`
 
@@ -169,8 +169,18 @@ But keep in mind if at least one of tabs does not exist - promise will be reject
 
 ### browser.webRequest.onAuthRequired.addListener
 
+You can use string in extraInfoSpec parameter. Like:
+
+```javascript
+Browser.webRequest.onAuthRequired.addListener(
+  () => {},
+  { 'urls': [ '<all_urls>' ] },
+  'blocking'
+);
+```
+
 For synchronous request pass "blocking" in the extraInfoSpec parameter.
-For asynchronous request pass "asyncBlocking" in the extraInfoSpec parameter and return Promise in listener. No documented part of all APIs: if you want to pass not desired asynchronous request use resolve() without any arguments.
+For asynchronous request pass "asyncBlocking" in the extraInfoSpec parameter and return Promise in listener. Not documented part of all APIs: if you want to pass not desired asynchronous request use resolve() without any arguments.
 
 ## Supported browsers
 

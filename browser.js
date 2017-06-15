@@ -214,6 +214,7 @@ let bindFullPromiseReturn = ( object, browserObject, properties ) => {
             if( ns.runtime.lastError ) {
               reject( ns.runtime.lastError ); return;
             }
+
             if( firstArg === undefined ) resolve();
             else resolve( firstArg );
           });
@@ -276,6 +277,11 @@ let Browser = ( () => {
         let listeners = [];
         webRequest.onAuthRequired = {
           'addListener': ( ...args ) => {
+            // Arguments
+            if( args.length === 3 && typeof args[ 2 ] === 'string' ) {
+              args[ 2 ] = [ args[ 2 ] ];
+            }
+
             let original = args[ 0 ];
             let asyncBlocking =
               args.length === 3 && _.includes( args[ 2 ], 'asyncBlocking' );
@@ -1033,8 +1039,9 @@ let Browser = ( () => {
       }
 
       if( ns.tabs.reload ) {
+        /** @type {function} */
         let reload = isChrome
-          ? bindPromiseReturn({}, ns.tabs, { '0-2': [ 'reload' ] }).reload
+          ? bindFullPromiseReturn({}, ns.tabs, { '0-2': [ 'reload' ] }).reload
           : ns.tabs.reload.bind( ns.tabs );
 
         tabs.reload = ( ...args ) => {
