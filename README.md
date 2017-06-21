@@ -155,6 +155,16 @@ Browser.sidebarAction.getTitle( 5 ).then( title => {
 });
 ```
 
+### browser.tabs.create
+
+You can use it with URL as first argument. Like:
+
+```javascript
+Browser.tabs.create( 'http://myurl.com/' ).then( tabInfo => {
+  // Use tabInfo
+});
+```
+
 ### browser.tabs.reload
 
 You can use reloadProperties argument as boolean. You can use tabs array (several tabs). Like:

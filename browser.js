@@ -1016,7 +1016,7 @@ let Browser = ( () => {
         bindPromiseReturn( tabs, ns.tabs, {
           '0': [ 'getCurrent' ],
           '1': [
-            'create', 'duplicate', 'highlight', 'remove', 'detectLanguage',
+            'duplicate', 'highlight', 'remove', 'detectLanguage',
             'getZoom', 'discard'
           ],
           '2': [
@@ -1031,11 +1031,36 @@ let Browser = ( () => {
       }
       else {
         bindMethods( tabs, ns.tabs, [
-          'getCurrent', 'get', 'create', 'duplicate', 'highlight',
+          'getCurrent', 'get', 'duplicate', 'highlight',
           'remove', 'detectLanguage', 'getZoom', 'discard', 'update', 'move',
           'captureVisibleTab', 'executeScript', 'insertCSS', 'setZoom',
           'setZoomSettings', 'sendMessage'
         ] );
+      }
+
+      if( ns.tabs.create ) {
+        tabs.create = createProperties => {
+          if( typeof createProperties === 'string' ) {
+            createProperties = { 'url': createProperties };
+          }
+
+          return (
+            isChrome
+            ? new Promise( resolve => {
+              ns.tabs.create( createProperties, resolve );
+            })
+            : ns.tabs.create( createProperties )
+          );
+        };
+      }
+
+      if( ns.tabs.query ) {
+        // 0 arguments support
+        tabs.query = ( queryInfo = {}) => (
+          isChrome
+          ? new Promise( resolve => { ns.tabs.query( queryInfo, resolve ); })
+          : ns.tabs.query( queryInfo )
+        );
       }
 
       if( ns.tabs.reload ) {
@@ -1086,15 +1111,6 @@ let Browser = ( () => {
             return reload.apply({}, args );
           }
         };
-      }
-
-      if( ns.tabs.query ) {
-        // 0 arguments support
-        tabs.query = ( queryInfo = {}) => (
-          isChrome
-          ? new Promise( resolve => { ns.tabs.query( queryInfo, resolve ); })
-          : ns.tabs.query( queryInfo )
-        );
       }
 
       return tabs;
