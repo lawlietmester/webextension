@@ -1,11 +1,11 @@
 {
   "name": "crossbrowserwebextension",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Tools to build crossbrowser FF/Chrome webextension",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC"
+  "author": "lawlietmester",
+  "license": "MIT"
 }
