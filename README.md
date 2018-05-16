@@ -114,6 +114,7 @@ Browser.contextualIdentities.query( 'name' ).then( identities => {
 ### desktopCapture.chooseDesktopMedia
 
 This method returns Promise with `desktopMediaRequestId` property.
+Promised resolved with `options` object, containing `streamId` property. (Due to promise cannot be resolved with 2 arguments)
 
 ### history
 

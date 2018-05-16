@@ -1,6 +1,7 @@
 /** desktopCapture (Chrome only)
 https://developer.chrome.com/extensions/desktopCapture */
 const bindAll = require( '../bindAll' );
+const Deferred = require( '../Deferred' );
 const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
 
@@ -18,30 +19,30 @@ module.exports = () => {
   @method
   @return {Promise} */
   desktopCapture.chooseDesktopMedia = ( ...args ) => {
-    let promise = new Promise( resolve => {
-      /** @type {Array} */
-      let newArgs = ( () => {
-        /** @type {integer} */
-        let length = ( () => {
-          let length = args.length > 1 ? args.length : 1;
-          if( length > 2 ) length = 2;
-          return length;
-        })();
+    let promise = Deferred();
 
-        return Array.apply( Array, Array( length ) ).map(
-          ( x, index ) => args[ index ]
-        );
+    /** @type {Array} */
+    let newArgs = ( () => {
+      /** @type {integer} */
+      let length = ( () => {
+        let length = args.length > 1 ? args.length : 1;
+        if( length > 2 ) length = 2;
+        return length;
       })();
 
-      // Adding callback as last argument
-      newArgs.push( ( streamId, options = {}) => {
-        resolve( Object.assign({}, options, { streamId }) );
-      });
+      return Array.apply( Array, Array( length ) ).map(
+        ( x, index ) => args[ index ]
+      );
+    })();
 
-      /** @type {integer} */
-      promise.desktopMediaRequestId =
-        ns.desktopCapture.chooseDesktopMedia.apply( ns.desktopCapture, newArgs );
+    // Adding callback as last argument
+    newArgs.push( ( streamId, options = {}) => {
+      promise.resolve( Object.assign({}, options, { streamId }) );
     });
+
+    /** @type {integer} */
+    promise.desktopMediaRequestId =
+      ns.desktopCapture.chooseDesktopMedia.apply( ns.desktopCapture, newArgs );
 
     return promise;
   };
