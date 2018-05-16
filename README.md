@@ -4,23 +4,23 @@ Hello! This project created to make united syntax for chrome/browser objects, pr
 
 Keep in mind that some features like Proxy API have absolutely different realizations in FF and Chrome - so you can not write one code for them both, you need to create browser split in your code.
 
+In comparison with similar FF library, this library supports Chrome-only features like desktopCapture.
+
 ## How to use
 
-Your project must be bundle based with support of ES6. Copy [this file](https://raw.githubusercontent.com/lawlietmester/webextension/master/browser.js) in your project.
+Install in npm using
 
-Import this file like
-
-```javascript
-import Browser from './browser';
+```
+npm i crossbrowser-webextension
 ```
 
-and use like you are using standard chrome/browser object.
+If you need standalone file version - use `Browser.js`. It defines `window.Browser` object.
 
-Support of npm install in future.
+## Code requirements
 
-## Dependencies
-
-Only ```lodash``` for most cases. If you need to support Chrome 31-, you need to include Promise polyfill at top of your bundle file code.
+Your environment must support JS features listed below:
+* Object.assign
+* Promise
 
 ## How to make browser split
 
@@ -33,7 +33,7 @@ else{
 }
 ```
 
-For more compicated cases (like embedded webextestions for FF + Chrome):
+For more complicated cases (like embedded webextestions for FF + Chrome):
 
 ```javascript
 let vChrome = () => {
@@ -79,7 +79,7 @@ __List of methods with zero arguments support:__
 You can use .get and .clear without arguments. All 3 methods are promise-based.
 As for 54th FF, there is no onChange object in it.
 
-### browser.browserAction
+### browserAction
 
 `.getBadgeText`, `.getTitle`, `.getPopup`, `.getBadgeBackgroundColor` could be ue used with tabId as first argument. Like:
 
@@ -89,7 +89,7 @@ Browser.browserAction.getPopup( 5 ).then( url => {
 });
 ```
 
-### browser.browserAction.setBadgeText
+### browserAction.setBadgeText
 
 You can use it with text as argument. Like:
 
@@ -97,11 +97,11 @@ You can use it with text as argument. Like:
 Browser.browserAction.setBadgeText( 'Icon text' );
 ```
 
-### browser.browserAction.removeBadgeText (no arguments)
+### browserAction.removeBadgeText (no arguments)
 
 This is alias of `browser.browserAction.setBadgeText({ 'text': '' })`
 
-### browser.contextualIdentities.query
+### contextualIdentities.query
 
 You can use it with name as argument. Like:
 
@@ -111,7 +111,11 @@ Browser.contextualIdentities.query( 'name' ).then( identities => {
 });
 ```
 
-### browser.history
+### desktopCapture.chooseDesktopMedia
+
+This method returns Promise with `desktopMediaRequestId` property.
+
+### history
 
 `.addUrl`, `.getVisits`, `.deleteUrl` could be ue used with url as first argument. Like:
 
@@ -121,7 +125,7 @@ Browser.history.addUrl( 'http://mysite.com' ).then( url => {
 });
 ```
 
-### browser.identity.removeCachedAuthToken
+### identity.removeCachedAuthToken
 
 You can use it with token as argument. Like:
 
@@ -131,11 +135,11 @@ Browser.identity.removeCachedAuthToken( 'f8k48fk48fk' ).then( () => {
 });
 ```
 
-### browser.privacy.network
+### privacy.network
 
 If `.webRTCIPHandlingPolicy` exist, deprecated features like `.webRTCNonProxiedUdpEnabled` and `.webRTCMultipleRoutesEnabled` are not provided.
 
-### browser.pageAction
+### pageAction
 
 `.getTitle`, `.getPopup` could be ue used with tabId as first argument. Like:
 
@@ -145,7 +149,11 @@ Browser.pageAction.getTitle( 5 ).then( title => {
 });
 ```
 
-### browser.sidebarAction
+### permissions.request
+
+In Chrome browser.permissions.request automatically will add all new available APIs to `Browser` object.
+
+### sidebarAction
 
 `.getPanel`, `.getTitle` could be ue used with tabId as first argument. Like:
 
@@ -155,7 +163,7 @@ Browser.sidebarAction.getTitle( 5 ).then( title => {
 });
 ```
 
-### browser.tabs.create
+### tabs.create
 
 You can use it with URL as first argument. Like:
 
@@ -165,7 +173,7 @@ Browser.tabs.create( 'http://myurl.com/' ).then( tabInfo => {
 });
 ```
 
-### browser.tabs.reload
+### tabs.reload
 
 You can use reloadProperties argument as boolean. You can use tabs array (several tabs). Like:
 
@@ -177,7 +185,7 @@ Browser.tabs.reload( [ 7, 12, 50 ], true ).then( () => {
 
 But keep in mind if at least one of tabs does not exist - promise will be rejected.
 
-### browser.webRequest.onAuthRequired.addListener
+### webRequest.onAuthRequired.addListener
 
 You can use string in extraInfoSpec parameter. Like:
 
@@ -192,10 +200,6 @@ Browser.webRequest.onAuthRequired.addListener(
 For synchronous request pass "blocking" in the extraInfoSpec parameter.
 For asynchronous request pass "asyncBlocking" in the extraInfoSpec parameter and return Promise in listener. Not documented part of all APIs: if you want to pass not desired asynchronous request use resolve() without any arguments.
 
-## Supported browsers
-
-Firefox 45+, Chrome 32+
-
 ## Answers on some questions
 
 * __Why this script does not based on Proxy object?__
@@ -203,11 +207,9 @@ By work I need to support Chrome 31+ which does not support Proxy object.
 In time it will be Proxy object based.
 
 * __What about support of Edge?__
-First I need to create good chrome/ff support.
+First I need to create good chrome/ff support. Will be in future
 
 
 ## TODO
 
-* Написать про особенность двойного использования (background/popup) и onmessage
-* Поддержка эмуляции FF .onChange
-* Поддержка deprecated для хрома вместо обычных -> сделать
+* Write about difference in usage between background and popup for onmessage
