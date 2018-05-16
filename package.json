@@ -8,6 +8,11 @@
     "lint": "eslint --ext .js build code",
     "lint:fix": "npm run lint -- --fix"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lawlietmester/webextension.git"
+  },
+  "keywords": [ "webextension", "webextension api" ],
   "author": "lawlietmester",
   "license": "MIT",
   "dependencies": {},
