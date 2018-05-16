@@ -1,6 +1,7 @@
 /** Deferred based on Promise
+@function
 @return {Promise} */
-let Deferred = () => {
+module.exports = () => {
   let res, rej;
   let deferred = new Promise( ( resolve, reject ) => {
     res = resolve;
@@ -11,6 +12,3 @@ let Deferred = () => {
 
   return deferred;
 };
-
-
-export default Deferred;
