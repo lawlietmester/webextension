@@ -19,7 +19,7 @@ module.exports = () => {
   };
 
   return bindAll( extension, ns.extension, {
-    'methods': [ 'getViews', 'getBackgroundPage', 'setUpdateUrlData' ],
+    'methods': [ 'getViews', 'getBackgroundPage', 'getURL', 'setUpdateUrlData' ],
     'promises': {
       '0': [ 'isAllowedIncognitoAccess', 'isAllowedFileSchemeAccess' ]
     }
