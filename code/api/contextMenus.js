@@ -17,10 +17,12 @@ module.exports = () => {
 
   return bindAll( contextMenus, ns.contextMenus, {
     'objects': [ 'onClicked' ],
-    'promises': {
-      '0': [ 'removeAll' ],
+    'fullPromises': {
       '1': [ 'create', 'remove' ],
       '2': [ 'update' ]
+    },
+    'promises': {
+      '0': [ 'removeAll' ]
     }
   });
 };

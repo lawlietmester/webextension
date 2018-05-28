@@ -1,4 +1,5 @@
 const bindBrowserSettings = require( './bindBrowserSettings' );
+const bindFullPromiseReturn = require( './bindFullPromiseReturn' );
 const bindMethods = require( './bindMethods' );
 const bindObjects = require( './bindObjects' );
 const bindPromiseReturn = require( './bindPromiseReturn' );
@@ -19,6 +20,9 @@ module.exports = ( object, browserObject, properties ) => {
   }
   if( properties.browserSettings ) {
     bindBrowserSettings( object, browserObject, properties.browserSettings );
+  }
+  if( properties.fullPromises ) {
+    bindFullPromiseReturn( object, browserObject, properties.fullPromises );
   }
   if( properties.methods ) {
     bindMethods( object, browserObject, properties.methods );
