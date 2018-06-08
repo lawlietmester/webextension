@@ -1,12 +1,12 @@
 /** debugger (Chrome only)
 https://developer.chrome.com/extensions/debugger */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.debugger || !isChrome ) return ns.debugger;
+  if( !ns.debugger || promiseSupport ) return ns.debugger;
 
   return bindAll({}, ns.debugger, {
     'objects': [ 'onDetach', 'onEvent' ],

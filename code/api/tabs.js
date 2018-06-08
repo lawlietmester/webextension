@@ -5,8 +5,8 @@ const bindAll = require( '../bindAll' );
 const bindFullPromiseReturn = require( '../bindFullPromiseReturn' );
 const bindMethods = require( '../bindMethods' );
 const bindPromiseReturn = require( '../bindPromiseReturn' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
@@ -22,7 +22,7 @@ module.exports = () => {
     'methods': [ 'connect' ]
   });
 
-  if( isChrome ) {
+  if( !promiseSupport ) {
     bindPromiseReturn( tabs, ns.tabs, {
       '0': [ 'getCurrent' ],
       '1': [
@@ -55,7 +55,7 @@ module.exports = () => {
       }
 
       return (
-        isChrome
+        !promiseSupport
           ? new Promise( resolve => {
             ns.tabs.create( createProperties, resolve );
           })
@@ -67,7 +67,7 @@ module.exports = () => {
   if( ns.tabs.query ) {
     // 0 arguments support
     tabs.query = ( queryInfo = {}) => (
-      isChrome
+      !promiseSupport
         ? new Promise( resolve => { ns.tabs.query( queryInfo, resolve ); })
         : ns.tabs.query( queryInfo )
     );
@@ -75,7 +75,7 @@ module.exports = () => {
 
   if( ns.tabs.reload ) {
     /** @type {function} */
-    let reload = isChrome
+    let reload = !promiseSupport
       ? bindFullPromiseReturn({}, ns.tabs, { '0-2': [ 'reload' ] }).reload
       : ns.tabs.reload.bind( ns.tabs );
 

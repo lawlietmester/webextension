@@ -2,15 +2,15 @@
 https://developer.chrome.com/extensions/permissions // F55+
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/permissions */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 /**
 @function
 @param {Browser} */
 module.exports = Browser => {
-  if( !ns.permissions || !isChrome ) return ns.permissions;
+  if( !ns.permissions || promiseSupport ) return ns.permissions;
 
   let permissions = bindAll({}, ns.permissions, {
     'objects': [ 'onAdded', 'onRemoved' ],

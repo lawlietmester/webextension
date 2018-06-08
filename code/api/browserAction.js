@@ -4,8 +4,8 @@ https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/browserAction */
 const bindAll = require( '../bindAll' );
 const bindMethods = require( '../bindMethods' );
 const bindPromiseReturn = require( '../bindPromiseReturn' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 const transform = require( '../transform' );
 
 
@@ -18,7 +18,7 @@ module.exports = () => {
       'setTitle', 'setPopup', 'enable', 'disable'
     ]
   });
-  if( isChrome ) {
+  if( !promiseSupport ) {
     bindPromiseReturn(
       browserAction, ns.browserAction, { '1': [ 'setIcon' ] }
     );
@@ -54,7 +54,7 @@ module.exports = () => {
         if( typeof details === 'number' ) details = { 'tabId': details };
 
         return (
-          isChrome
+          !promiseSupport
             ? new Promise( resolve => {
               ns.browserAction[ property ]( details, resolve );
             })

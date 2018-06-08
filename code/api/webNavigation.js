@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/webNavigation
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webNavigation */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.webNavigation || !isChrome ) return ns.webNavigation;
+  if( !ns.webNavigation || promiseSupport ) return ns.webNavigation;
 
   let webNavigation = {};
 

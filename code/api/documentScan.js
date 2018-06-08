@@ -1,12 +1,12 @@
 /** documentScan (Chrome only)
 https://developer.chrome.com/extensions/documentScan */
 const bindPromiseReturn = require( '../bindPromiseReturn' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.documentScan || !isChrome ) return ns.documentScan;
+  if( !ns.documentScan || promiseSupport ) return ns.documentScan;
 
   return bindPromiseReturn({}, ns.documentScan, {
     '1': [ 'documentScan' ]

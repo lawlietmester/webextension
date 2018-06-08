@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/proxy
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/proxy */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
+const promiseSupport = require( '../promiseSupport' );
 const ns = require( '../ns' );
 
 
 module.exports = () => {
-  if( typeof ns.proxy !== 'object' || !isChrome ) return ns.proxy;
+  if( typeof ns.proxy !== 'object' || promiseSupport ) return ns.proxy;
 
   return bindAll({}, ns.proxy, {
     'objects': [ 'onProxyError' ],

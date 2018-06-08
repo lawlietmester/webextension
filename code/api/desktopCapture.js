@@ -2,13 +2,13 @@
 https://developer.chrome.com/extensions/desktopCapture */
 const bindAll = require( '../bindAll' );
 const Deferred = require( '../Deferred' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 /** @function */
 module.exports = () => {
-  if( !ns.desktopCapture || !isChrome ) return ns.desktopCapture;
+  if( !ns.desktopCapture || promiseSupport ) return ns.desktopCapture;
 
   /** @type {Object} */
   let desktopCapture = bindAll({}, ns.desktopCapture, {

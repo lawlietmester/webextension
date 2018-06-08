@@ -1,8 +1,8 @@
-const isChrome = require( './isChrome' );
+const browserName = require( './browserName' );
 
 
 /** @type {Object} */
 module.exports = ( () => {
-  if( isChrome && typeof chrome === 'undefined' ) return {};
-  return isChrome ? chrome : browser;
+  if( browserName === 'chrome' && typeof chrome === 'undefined' ) return {};
+  return browserName === 'chrome' ? chrome : browser;
 })();

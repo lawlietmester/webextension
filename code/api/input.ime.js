@@ -1,13 +1,13 @@
 /** input.ime (Chrome only)
 https://developer.chrome.com/extensions/input_ime */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
   if( !ns.input || !ns.input.ime ) return;
-  if( !isChrome ) return ns.input.ime;
+  if( promiseSupport ) return ns.input.ime;
 
   return bindAll({}, ns.input.ime, {
     'objects': [

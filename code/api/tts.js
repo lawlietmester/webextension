@@ -1,12 +1,12 @@
 /** tts (Chrome only)
 https://developer.chrome.com/extensions/tts */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.tts || !isChrome ) return ns.tts;
+  if( !ns.tts || promiseSupport ) return ns.tts;
 
   return bindAll({}, ns.tts, {
     'methods': [ 'pause', 'resume', 'stop' ],

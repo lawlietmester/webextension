@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/i18n
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/i18n */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.i18n || !isChrome ) return ns.i18n;
+  if( !ns.i18n || promiseSupport ) return ns.i18n;
 
   let i18n = bindAll({}, ns.i18n, {
     'methods': [ 'getMessage' ],

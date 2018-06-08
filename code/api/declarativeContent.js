@@ -1,12 +1,12 @@
 /** declarativeContent (Chrome only)
 https://developer.chrome.com/extensions/declarativeContent */
 const bindObjects = require( '../bindObjects' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.declarativeContent || !isChrome ) return ns.declarativeContent;
+  if( !ns.declarativeContent || promiseSupport ) return ns.declarativeContent;
 
   return bindObjects({}, ns.declarativeContent, [ 'onPageChanged' ] );
 };

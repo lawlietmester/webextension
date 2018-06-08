@@ -1,6 +1,6 @@
 const bindMethods = require( './bindMethods' );
 const bindPromiseReturn = require( './bindPromiseReturn' );
-const isChrome = require( './isChrome' );
+const promiseSupport = require( './promiseSupport' );
 const transform = require( './transform' );
 
 
@@ -12,7 +12,7 @@ module.exports = browserObject => {
 
   let returnObject = {};
 
-  if( isChrome ) {
+  if( !promiseSupport ) {
     bindPromiseReturn( returnObject, browserObject, { '1': [ 'set' ] });
   }
   else bindMethods( returnObject, browserObject, [ 'set' ] );
@@ -22,7 +22,7 @@ module.exports = browserObject => {
     ( carry, property ) => {
       // Support of 0 arguments
       carry[ property ] = ( arg = {}) => (
-        isChrome
+        !promiseSupport
           ? new Promise( resolve => {
             browserObject[ property ]( arg, firstArg => {
               if( firstArg === undefined ) resolve( true );

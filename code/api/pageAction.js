@@ -4,8 +4,8 @@ https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/pageAction */
 const bindAll = require( '../bindAll' );
 const bindMethods = require( '../bindMethods' );
 const bindPromiseReturn = require( '../bindPromiseReturn' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 const transform = require( '../transform' );
 
 
@@ -17,7 +17,7 @@ module.exports = () => {
     'methods': [ 'hide', 'show', 'setTitle', 'setPopup' ]
   });
 
-  if( isChrome ) {
+  if( !promiseSupport ) {
     bindPromiseReturn(
       pageAction, ns.pageAction, { '1': [ 'setIcon' ] }
     );
@@ -36,7 +36,7 @@ module.exports = () => {
         if( typeof details === 'number' ) details = { 'tabId': details };
 
         return (
-          isChrome
+          !promiseSupport
             ? new Promise( resolve => {
               ns.pageAction[ property ]( details, resolve );
             })

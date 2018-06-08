@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/notifications
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/notifications */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.notifications || !isChrome ) return ns.notifications;
+  if( !ns.notifications || promiseSupport ) return ns.notifications;
 
   return bindAll({}, ns.notifications, {
     'objects': [

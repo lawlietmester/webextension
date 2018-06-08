@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/contextMenus
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/contextMenus */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.contextMenus || !isChrome ) return ns.contextMenus;
+  if( !ns.contextMenus || promiseSupport ) return ns.contextMenus;
 
   let contextMenus = {
     get 'ACTION_MENU_TOP_LEVEL_LIMIT'() {

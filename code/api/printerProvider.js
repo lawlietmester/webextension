@@ -1,12 +1,12 @@
 /** printerProvider (Chrome only)
 https://developer.chrome.com/extensions/printerProvider */
 const bindObjects = require( '../bindObjects' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.printerProvider || !isChrome ) return ns.printerProvider;
+  if( !ns.printerProvider || promiseSupport ) return ns.printerProvider;
 
   return bindObjects({}, ns.printerProvider, [
     'onGetCapabilityRequested',

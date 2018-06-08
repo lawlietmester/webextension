@@ -4,8 +4,8 @@ https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/identity */
 const bindAll = require( '../bindAll' );
 const bindMethods = require( '../bindMethods' );
 const bindPromiseReturn = require( '../bindPromiseReturn' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
@@ -16,7 +16,7 @@ module.exports = () => {
     'methods': [ 'getRedirectURL' ]
   });
 
-  if( isChrome ) {
+  if( !promiseSupport ) {
     bindPromiseReturn( identity, ns.identity, {
       '0': [ 'getAccounts', 'getProfileUserInfo' ],
       '0-1': [ 'getAuthToken' ],
@@ -35,7 +35,7 @@ module.exports = () => {
       if( typeof details === 'string' ) details = { 'token': details };
 
       return (
-        isChrome
+        !promiseSupport
           ? new Promise( resolve => {
             ns.identity.removeCachedAuthToken( details, resolve );
           })

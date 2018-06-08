@@ -1,6 +1,6 @@
 const bindMethods = require( '../bindMethods' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 /**
@@ -63,15 +63,15 @@ module.exports = () => {
         properties set. */
 
         // FF change asyncBlocking -> blocking
-        if( asyncBlocking && !isChrome ) {
+        if( asyncBlocking && promiseSupport ) {
           args[ 2 ] = args[ 2 ].map(
-            item => item !== 'asyncBlocking' ? item : 'blocking'
+            item => item === 'asyncBlocking' ? 'blocking' : item
           );
         }
 
         // Chrome - use callback for promises
         let modified = original;
-        if( asyncBlocking && isChrome ) {
+        if( asyncBlocking && !promiseSupport ) {
           let callback = args[ 0 ];
           let chromeCallback = ( details, asyncCallback ) => {
             callback( details ).then( asyncCallback );

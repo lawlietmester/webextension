@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/extension
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/extension */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
+const promiseSupport = require( '../promiseSupport' );
 const ns = require( '../ns' );
 
 
 module.exports = () => {
-  if( !ns.extension || !isChrome ) return ns.extension;
+  if( !ns.extension || promiseSupport ) return ns.extension;
 
   let extension = {
     get 'lastError'() {

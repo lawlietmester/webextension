@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/windows
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/windows */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.windows || !isChrome ) return ns.windows;
+  if( !ns.windows || promiseSupport ) return ns.windows;
 
   let windows = {
     get 'WINDOW_ID_NONE'() { return ns.windows.WINDOW_ID_NONE; },

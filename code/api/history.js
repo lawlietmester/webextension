@@ -4,8 +4,8 @@ https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/history */
 const bindMethods = require( '../bindMethods' );
 const bindObjects = require( '../bindObjects' );
 const bindPromiseReturn = require( '../bindPromiseReturn' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 const transform = require( '../transform' );
 
 
@@ -16,7 +16,7 @@ module.exports = () => {
     {}, ns.history, [ 'onVisited', 'onVisitRemoved' ]
   );
 
-  if( isChrome ) {
+  if( !promiseSupport ) {
     bindPromiseReturn( history, ns.history, {
       '0': [ 'deleteAll' ],
       '1': [ 'deleteRange', 'search' ]
@@ -37,7 +37,7 @@ module.exports = () => {
         if( typeof details === 'string' ) details = { 'url': details };
 
         return (
-          isChrome
+          !promiseSupport
             ? new Promise( resolve => {
               ns.history[ property ]( details, resolve );
             })

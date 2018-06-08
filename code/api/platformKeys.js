@@ -1,12 +1,12 @@
 /** platformKeys (Chrome only)
 https://developer.chrome.com/extensions/platformKeys */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.platformKeys || !isChrome ) return ns.platformKeys;
+  if( !ns.platformKeys || promiseSupport ) return ns.platformKeys;
 
   return bindAll({}, ns.platformKeys, {
     'methods': [ 'subtleCrypto' ],

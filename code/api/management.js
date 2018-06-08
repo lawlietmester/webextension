@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/management
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/management */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.management || !isChrome ) return ns.management;
+  if( !ns.management || promiseSupport ) return ns.management;
 
   return bindAll({}, ns.management, {
     'objects': [

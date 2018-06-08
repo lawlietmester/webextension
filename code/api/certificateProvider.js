@@ -1,12 +1,12 @@
 /** certificateProvider (Chrome only)
 https://developer.chrome.com/extensions/certificateProvider */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.certificateProvider || !isChrome ) return ns.certificateProvider;
+  if( !ns.certificateProvider || promiseSupport ) return ns.certificateProvider;
 
   return bindAll({}, ns.certificateProvider, {
     'objects': [ 'onCertificatesRequested', 'onSignDigestRequested' ],

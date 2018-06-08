@@ -1,12 +1,12 @@
 /** fontSettings (Chrome only)
 https://developer.chrome.com/extensions/fontSettings */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.fontSettings || !isChrome ) return ns.fontSettings;
+  if( !ns.fontSettings || promiseSupport ) return ns.fontSettings;
 
   return bindAll({}, ns.fontSettings, {
     'objects': [

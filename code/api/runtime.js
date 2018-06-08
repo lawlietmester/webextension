@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/runtime
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/runtime */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.runtime || !isChrome ) return ns.runtime;
+  if( !ns.runtime || promiseSupport ) return ns.runtime;
 
   let runtime = {
     get 'lastError'() { return ns.runtime.lastError; }

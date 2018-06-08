@@ -1,12 +1,12 @@
 /** vpnProvider (Chrome only)
 https://developer.chrome.com/extensions/vpnProvider */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.vpnProvider || !isChrome ) return ns.vpnProvider;
+  if( !ns.vpnProvider || promiseSupport ) return ns.vpnProvider;
 
   return bindAll({}, ns.vpnProvider, {
     'objects': [

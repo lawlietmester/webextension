@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/browsingData
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/browsingData */
 const bindPromiseReturn = require( '../bindPromiseReturn' );
-const isChrome = require( '../isChrome' );
+const promiseSupport = require( '../promiseSupport' );
 const ns = require( '../ns' );
 
 
 module.exports = () => {
-  if( !ns.browsingData || !isChrome ) return ns.browsingData;
+  if( !ns.browsingData || promiseSupport ) return ns.browsingData;
 
   return bindPromiseReturn({}, ns.browsingData, {
     '0': [ 'settings' ],
