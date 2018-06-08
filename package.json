@@ -1,6 +1,6 @@
 {
   "name": "crossbrowser-webextension",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "description": "Tools to build crossbrowser FF/Chrome webextension",
   "main": "./code/index.js",
   "scripts": {
@@ -37,6 +37,8 @@
     "vinyl-source-stream": "^2.0.0"
   },
   "browserify": {
-    "transform": [ "babelify" ]
+    "transform": [
+      "babelify"
+    ]
   }
 }
