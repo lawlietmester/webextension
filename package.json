@@ -1,6 +1,6 @@
 {
   "name": "crossbrowser-webextension",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Tools to build crossbrowser FF/Chrome webextension",
   "main": "./code/index.js",
   "scripts": {
