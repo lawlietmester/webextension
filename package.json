@@ -1,7 +1,7 @@
 {
   "name": "crossbrowser-webextension",
-  "version": "0.1.5",
-  "description": "Tools to build crossbrowser FF/Chrome webextension",
+  "version": "0.1.7",
+  "description": "Tools to build crossbrowser FF/Chrome/Edge webextension",
   "main": "./code/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -35,5 +35,10 @@
     "eslint-plugin-standard": "^3.0.1",
     "gulp": "^3.9.1",
     "vinyl-source-stream": "^2.0.0"
+  },
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
   }
 }

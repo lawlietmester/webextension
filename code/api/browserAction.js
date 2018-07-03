@@ -29,7 +29,9 @@ module.exports = () => {
 
   if( ns.browserAction.setBadgeText ) {
     browserAction.setBadgeText = details => {
-      if( typeof details === 'string' ) details = { 'text': details };
+      if( typeof details === 'number' || typeof details === 'string' ) {
+        details = { 'text': String( details ) };
+      }
       ns.browserAction.setBadgeText( details );
     };
     browserAction.removeBadgeText = () => {
