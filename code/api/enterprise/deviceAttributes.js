@@ -2,7 +2,7 @@
 https://developer.chrome.com/extensions/enterprise_deviceAttributes */
 const bindPromiseReturn = require( '../../bindPromiseReturn' );
 const ns = require( '../../ns' );
-const promiseSupport = require( '../promiseSupport' );
+const promiseSupport = require( '../../promiseSupport' );
 
 
 module.exports = () => {

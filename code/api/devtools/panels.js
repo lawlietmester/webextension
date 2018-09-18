@@ -3,7 +3,7 @@ https://developer.chrome.com/extensions/devtools_panels
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/devtools.panels */
 const bindPromiseReturn = require( '../../bindPromiseReturn' );
 const ns = require( '../../ns' );
-const promiseSupport = require( '../promiseSupport' );
+const promiseSupport = require( '../../promiseSupport' );
 
 
 module.exports = () => {

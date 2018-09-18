@@ -3,7 +3,7 @@ https://developer.chrome.com/extensions/devtools_network
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/devtools.network */
 const bindAll = require( '../../bindAll' );
 const ns = require( '../../ns' );
-const promiseSupport = require( '../promiseSupport' );
+const promiseSupport = require( '../../promiseSupport' );
 
 
 module.exports = () => {

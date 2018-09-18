@@ -2,7 +2,7 @@
 https://developer.chrome.com/extensions/system_storage */
 const bindAll = require( '../../bindAll' );
 const ns = require( '../../ns' );
-const promiseSupport = require( '../promiseSupport' );
+const promiseSupport = require( '../../promiseSupport' );
 
 
 module.exports = () => {
