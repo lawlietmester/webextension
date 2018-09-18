@@ -2,8 +2,8 @@
 https://developer.chrome.com/extensions/browsingData
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/browsingData */
 const bindPromiseReturn = require( '../bindPromiseReturn' );
-const promiseSupport = require( '../promiseSupport' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {

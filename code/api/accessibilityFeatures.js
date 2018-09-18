@@ -1,12 +1,12 @@
 /** accessibilityFeatures (Chrome only)
 https://developer.chrome.com/extensions/accessibilityFeatures */
 const bindObjects = require( '../bindObjects' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.accessibilityFeatures || !isChrome ) return ns.accessibilityFeatures;
+  if( !ns.accessibilityFeatures || promiseSupport ) return ns.accessibilityFeatures;
 
   return bindObjects({}, ns.accessibilityFeatures, [
     'animationPolicy',

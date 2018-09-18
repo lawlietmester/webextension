@@ -1,12 +1,12 @@
 /** enterprise.platformKeys (Chrome only)
 https://developer.chrome.com/extensions/enterprise_platformKeys */
 const bindPromiseReturn = require( '../../bindPromiseReturn' );
-const isChrome = require( '../../isChrome' );
 const ns = require( '../../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.enterprise.platformKeys || !isChrome ) {
+  if( !ns.enterprise.platformKeys || promiseSupport ) {
     return ns.enterprise.platformKeys;
   }
 

@@ -1,12 +1,12 @@
 /** system.storage (Chrome only)
 https://developer.chrome.com/extensions/system_storage */
 const bindAll = require( '../../bindAll' );
-const isChrome = require( '../../isChrome' );
 const ns = require( '../../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.system.storage || !isChrome ) return ns.system.storage;
+  if( !ns.system.storage || promiseSupport ) return ns.system.storage;
 
   return bindAll({}, ns.system.storage, {
     'objects': [ 'onAttached', 'onDetached' ],

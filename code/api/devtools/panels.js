@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/devtools_panels
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/devtools.panels */
 const bindPromiseReturn = require( '../../bindPromiseReturn' );
-const isChrome = require( '../../isChrome' );
 const ns = require( '../../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.devtools.panels || !isChrome ) return ns.devtools.panels;
+  if( !ns.devtools.panels || promiseSupport ) return ns.devtools.panels;
 
   let panels = {
     get 'elements'() { return ns.devtools.panels.elements; },

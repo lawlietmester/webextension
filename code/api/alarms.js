@@ -2,12 +2,12 @@
 https://developer.chrome.com/extensions/alarms
 https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/alarms */
 const bindAll = require( '../bindAll' );
-const isChrome = require( '../isChrome' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
-  if( !ns.alarms || !isChrome ) return ns.alarms;
+  if( !ns.alarms || promiseSupport ) return ns.alarms;
 
   return bindAll({}, ns.bookmarks, {
     'objects': [ 'onAlarm' ],

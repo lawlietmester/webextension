@@ -1,8 +1,8 @@
 /** gcm (Chrome only)
 https://developer.chrome.com/extensions/gcm */
 const bindAll = require( '../bindAll' );
-const promiseSupport = require( '../promiseSupport' );
 const ns = require( '../ns' );
+const promiseSupport = require( '../promiseSupport' );
 
 
 module.exports = () => {
