@@ -8,8 +8,10 @@ const ns = require( '../ns' );
 
 module.exports = () => {
   if( typeof ns.proxy !== 'object' || promiseSupport ) return ns.proxy;
-
-  return bindAll({}, ns.proxy, {
+  
+  return bindAll({
+    'onError': ns.proxy.onError || ns.proxy.onProxyError
+  }, ns.proxy, {
     'objects': [ 'onProxyError' ],
     'browserSettings': [ 'settings' ]
   });

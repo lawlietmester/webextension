@@ -154,6 +154,10 @@ Browser.pageAction.getTitle( 5 ).then( title => {
 
 In Chrome browser.permissions.request automatically will add all new available APIs to `Browser` object.
 
+### proxy
+
+`proxy.onError` works as `proxy.onProxyError` when `proxy.onError` undefined
+
 ### sidebarAction
 
 `.getPanel`, `.getTitle` could be ue used with tabId as first argument. Like:
@@ -204,11 +208,11 @@ For asynchronous request pass "asyncBlocking" in the extraInfoSpec parameter and
 ## Answers on some questions
 
 * __Why this script does not based on Proxy object?__
-By work I need to support Chrome 31+ which does not support Proxy object.
+By work I need to support Chrome 38+ which does not support Proxy object.
 In time it will be Proxy object based.
 
 * __What about support of Edge?__
-First I need to create good chrome/ff support. Will be in future
+Edge is now equal to Chrome ;)
 
 
 ## TODO
