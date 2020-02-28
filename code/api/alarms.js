@@ -9,7 +9,7 @@ const promiseSupport = require( '../promiseSupport' );
 module.exports = () => {
   if( !ns.alarms || promiseSupport ) return ns.alarms;
 
-  return bindAll({}, ns.bookmarks, {
+  return bindAll({}, ns.alarms, {
     'objects': [ 'onAlarm' ],
     'methods': [ 'create' ],
     'promises': {
