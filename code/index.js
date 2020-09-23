@@ -230,9 +230,4 @@ Browser.resetAPI = api => {
 };
 
 
-if( typeof process !== 'object' || process + '' !== '[object process]' ) {
-  window.Browser = Browser;
-}
-
-
 module.exports = Browser;
